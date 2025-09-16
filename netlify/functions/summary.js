@@ -15,12 +15,11 @@ export default async (req, context) => {
     const { GITHUB_REPO, GITHUB_BRANCH, GITHUB_TOKEN } = process.env;
     const [owner, repo] = (GITHUB_REPO || "").split("/");
     const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${GITHUB_BRANCH}/${path}`;
-
     const headers = GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {};
     const res = await fetch(rawUrl, { headers });
 
     if (!res.ok) {
-      const body = { area, lastTime: null, minutesSince: null, issuesToday: 0, status: "OK" };
+      const body = { area, lastTime: null, minutesSince: null, issuesToday: 0, latestCount: 0, status: "OK" };
       return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" } });
     }
 
@@ -28,7 +27,7 @@ export default async (req, context) => {
     const lines = content.split(/\r?\n/).filter(Boolean);
 
     if (lines.length === 0) {
-      const body = { area, lastTime: null, minutesSince: null, issuesToday: 0, status: "OK" };
+      const body = { area, lastTime: null, minutesSince: null, issuesToday: 0, latestCount: 0, status: "OK" };
       return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
     }
 
@@ -51,9 +50,12 @@ export default async (req, context) => {
       minutesSince = Math.max(0, Math.floor(ms / 60000));
     }
 
-    const status = latestCount > 0 ? "Attention" : "OK";
-    const body = { area, lastTime, minutesSince, issuesToday, status };
+    let status = "OK";
+    if (issuesToday >= 5) status = "Critical";
+    else if (issuesToday >= 3) status = "Alert";
+    else if (issuesToday >= 1) status = "Attention";
 
+    const body = { area, lastTime, minutesSince, issuesToday, latestCount, status };
     return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" } });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 200, headers: { "Content-Type": "application/json" } });
