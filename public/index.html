@@ -5,101 +5,135 @@
   <title>Plant Ops Area Check</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    :root { --ok:#16a34a; --attn:#dc2626; --card:#111827; --bg:#0b1220; --text:#e5e7eb; --muted:#9ca3af; }
+    :root { --bg:#0b0f1a; --panel:#0f172a; --muted:#9aa4b2; --text:#e6f0ff; --line:#192235; --ok:#16a34a; --warn:#f59e0b; --attn:#ef4444; --chip:#111827; --chipb:#22314d; }
     * { box-sizing: border-box; }
-    html,body { margin:0; height:100%; background:var(--bg); color:var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
-    header { padding:16px 20px; border-bottom:1px solid #1f2937; display:flex; align-items:center; justify-content:space-between; }
-    header h1 { font-size:20px; margin:0; }
-    .right { font-size:14px; color:var(--muted); }
-    main { padding:20px; max-width:1000px; margin:0 auto; }
-    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:16px; }
-    .card { background:var(--card); border:1px solid #1f2937; border-radius:14px; padding:16px; }
-    .row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-    .area { font-size:18px; font-weight:600; letter-spacing:0.5px; }
-    .badge { padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700; }
-    .ok { background:rgba(22,163,74,0.15); color:#bbf7d0; border:1px solid rgba(22,163,74,0.5); }
-    .attn { background:rgba(220,38,38,0.15); color:#fecaca; border:1px solid rgba(220,38,38,0.5); }
-    dl { margin:14px 0 0 0; display:grid; grid-template-columns: 1fr 1fr; gap:10px 14px; }
-    dt { color:var(--muted); font-size:12px; }
-    dd { margin:0; font-size:14px; }
-    footer { padding:14px 20px; color:var(--muted); font-size:12px; border-top:1px solid #1f2937; text-align:center; }
-    .controls { display:flex; gap:8px; margin-bottom:16px; }
-    button { background:#1f2937; color:var(--text); border:1px solid #374151; border-radius:10px; padding:8px 12px; font-weight:600; cursor:pointer; }
-    button:hover { filter:brightness(1.1); }
-    input[type=text] { background:#0f172a; color:var(--text); border:1px solid #1f2937; border-radius:10px; padding:8px 10px; min-width:140px; }
+    html,body { height:100%; margin:0; background:radial-gradient(1200px 600px at 20% -10%, #12203a 0%, rgba(18,32,58,0) 60%), radial-gradient(1200px 600px at 120% 0%, #0c2a43 0%, rgba(12,42,67,0) 50%), var(--bg); color:var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    .wrap { max-width:1200px; margin:0 auto; padding:18px 20px 28px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 12px; background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0)); border:1px solid var(--line); border-radius:16px; backdrop-filter: blur(6px); }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .logo { width:38px; height:38px; border-radius:12px; background:conic-gradient(from 0deg, #45ffb2, #22a1ff, #7c4dff, #45ffb2); padding:2px; }
+    .logo span { display:block; width:100%; height:100%; border-radius:10px; background:radial-gradient(140% 140% at 30% 20%, #18243e 0%, #0e1a2f 70%); }
+    h1 { margin:0; font-size:18px; letter-spacing:0.4px; }
+    .updated { font-size:13px; color:var(--muted); }
+    .controls { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 14px; }
+    input[type=text] { background:#0b1324; color:var(--text); border:1px solid var(--line); border-radius:12px; padding:10px 12px; min-width:200px; }
+    button { background:linear-gradient(180deg,#1b2745,#121a2f); color:var(--text); border:1px solid #263352; border-radius:12px; padding:10px 14px; font-weight:600; cursor:pointer; transition:transform .05s ease, filter .2s ease; }
+    button:hover { filter:brightness(1.12); }
+    button:active { transform:translateY(1px); }
+    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:16px; }
+    .card { position:relative; background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border:1px solid var(--line); border-radius:18px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,0.25); }
+    .row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .area { display:flex; align-items:center; gap:10px; }
+    .chip { background:linear-gradient(180deg, var(--chip), var(--chipb)); border:1px solid #2a3a5a; color:#cad7f5; padding:6px 12px; border-radius:999px; font-weight:700; letter-spacing:0.6px; }
+    .badge { padding:6px 12px; border-radius:999px; font-size:12px; font-weight:800; letter-spacing:0.4px; border:1px solid transparent; }
+    .ok { background:rgba(22,163,74,0.15); border-color:rgba(22,163,74,0.4); color:#b7f7c7; }
+    .warn { background:rgba(245,158,11,0.15); border-color:rgba(245,158,11,0.45); color:#ffe8b3; }
+    .attn { background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.45); color:#ffcccc; }
+    .kpis { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-top:14px; }
+    .kpi { background:rgba(15,23,42,0.7); border:1px solid var(--line); border-radius:14px; padding:12px; }
+    .kpi dt { font-size:12px; color:var(--muted); }
+    .kpi dd { margin:4px 0 0 0; font-size:18px; font-weight:700; }
+    .ring { position:relative; width:78px; height:78px; border-radius:50%; display:grid; place-items:center; }
+    .ring::before { content:""; position:absolute; inset:0; border-radius:50%; background:conic-gradient(var(--ringColor) var(--ringFill), rgba(255,255,255,0.06) 0); }
+    .ring::after { content:""; position:absolute; inset:8px; border-radius:50%; background:linear-gradient(180deg,#0b1220,#0e1628); border:1px solid var(--line); }
+    .ringVal { position:relative; font-size:14px; font-weight:800; }
+    footer { margin-top:18px; color:var(--muted); font-size:12px; text-align:center; }
+    .bar { height:1px; background:linear-gradient(90deg, transparent, #2a3a5a, transparent); margin:14px 0; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Plant Ops Area Check</h1>
-    <div class="right" id="updated">Loading</div>
-  </header>
-  <main>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo"><span></span></div>
+        <h1>Plant Ops Area Check</h1>
+      </div>
+      <div class="updated" id="updated">Loading</div>
+    </header>
+
     <div class="controls">
       <input type="text" id="addArea" placeholder="Add area id">
       <button id="addBtn">Add</button>
       <button id="refreshBtn">Refresh</button>
       <button id="clearBtn">Clear list</button>
     </div>
+
     <div class="grid" id="grid"></div>
-  </main>
-  <footer>
-    Status uses latest record for each area, issuesToday is the daily sum.
-  </footer>
+    <div class="bar"></div>
+    <footer>Status uses latest record for each area, Issues today is the daily sum.</footer>
+  </div>
 
   <script>
-    const API_BASE = "https://plantopsareacheck.netlify.app/.netlify/functions";
-    const DEFAULT_AREAS = ["KILL"];
-    const STORE_KEY = "plantops-areas";
+    const API = "https://plantopsareacheck.netlify.app/.netlify/functions/summary";
+    const STORE = "plantops-areas";
+    const DEFAULTS = ["KILL"];
 
     function loadAreas() {
       try {
-        const raw = localStorage.getItem(STORE_KEY);
-        if (!raw) return [...DEFAULT_AREAS];
-        const arr = JSON.parse(raw);
-        if (!Array.isArray(arr) || arr.length === 0) return [...DEFAULT_AREAS];
-        return arr.map(s => String(s).toUpperCase());
-      } catch { return [...DEFAULT_AREAS]; }
+        const s = localStorage.getItem(STORE);
+        const arr = s ? JSON.parse(s) : DEFAULTS;
+        return Array.from(new Set(arr.map(v => String(v || "").trim().toUpperCase()))).filter(Boolean);
+      } catch { return [...DEFAULTS]; }
     }
+    function saveAreas(a) { localStorage.setItem(STORE, JSON.stringify(a)); }
 
-    function saveAreas(areas) {
-      localStorage.setItem(STORE_KEY, JSON.stringify(areas));
-    }
-
-    function fmtTime(iso) {
+    function fmt(iso) {
       if (!iso) return "n/a";
-      try {
-        const d = new Date(iso);
-        const pad = n => String(n).padStart(2,"0");
-        return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds()) + " UTC";
-      } catch { return iso; }
+      const d = new Date(iso);
+      const p = n => String(n).padStart(2,"0");
+      return d.getUTCFullYear()+"-"+p(d.getUTCMonth()+1)+"-"+p(d.getUTCDate())+" "+p(d.getUTCHours())+":"+p(d.getUTCMinutes())+":"+p(d.getUTCSeconds())+" UTC";
     }
 
-    function badge(status) {
-      const ok = String(status).toUpperCase() === "OK";
-      const cls = ok ? "badge ok" : "badge attn";
-      return `<span class="${cls}">${ok ? "OK" : "Attention"}</span>`;
+    function statusBadge(s) {
+      const v = String(s || "").toUpperCase();
+      if (v === "OK") return '<span class="badge ok">OK</span>';
+      if (v === "ATTENTION") return '<span class="badge attn">Attention</span>';
+      return '<span class="badge warn">Unknown</span>';
     }
 
-    function card(area, data) {
+    function freshnessColor(mins) {
+      if (mins == null) return "--attn";
+      if (mins <= 15) return "--ok";
+      if (mins <= 60) return "--warn";
+      return "--attn";
+    }
+
+    function ring(areaData) {
+      const mins = Number(areaData.minutesSince ?? 0);
+      const capped = Math.max(0, Math.min(mins, 60));
+      const fill = Math.round((capped / 60) * 360);
+      const varName = freshnessColor(mins);
       return `
-        <div class="card" data-area="${area}">
-          <div class="row">
-            <div class="area">${area}</div>
-            <div>${badge(data.status)}</div>
-          </div>
-          <dl>
-            <dt>Issues today</dt><dd>${Number(data.issuesToday ?? 0)}</dd>
-            <dt>Last time</dt><dd>${fmtTime(data.lastTime)}</dd>
-            <dt>Minutes since</dt><dd>${Number(data.minutesSince ?? 0)}</dd>
-            <dt>Status</dt><dd>${data.status}</dd>
-          </dl>
+        <div class="ring" style="--ringColor: var(${varName}); --ringFill: ${fill}deg">
+          <div class="ringVal">${isFinite(mins) ? mins : 0}m</div>
         </div>
       `;
     }
 
-    async function fetchArea(area) {
-      const url = `${API_BASE}/summary?area=${encodeURIComponent(area)}`;
+    function card(area, d) {
+      const badge = statusBadge(d.status);
+      return `
+        <div class="card">
+          <div class="row">
+            <div class="area">
+              <span class="chip">${area}</span>
+            </div>
+            ${badge}
+          </div>
+          <div class="row" style="margin-top:14px; gap:16px">
+            ${ring(d)}
+            <div class="kpis" style="flex:1">
+              <div class="kpi"><dt>Issues today</dt><dd>${Number(d.issuesToday ?? 0)}</dd></div>
+              <div class="kpi"><dt>Last time</dt><dd>${fmt(d.lastTime)}</dd></div>
+              <div class="kpi"><dt>Status</dt><dd>${d.status}</dd></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function fetchArea(a) {
+      const url = API + "?area=" + encodeURIComponent(a);
       const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) throw new Error("HTTP " + res.status);
       return res.json();
@@ -108,47 +142,48 @@
     async function render() {
       const grid = document.getElementById("grid");
       const areas = loadAreas();
-      const results = await Promise.allSettled(areas.map(a => fetchArea(a)));
-      grid.innerHTML = results.map((r, i) => {
-        const area = areas[i];
-        if (r.status === "fulfilled") return card(area, r.value);
+      const results = await Promise.allSettled(areas.map(fetchArea));
+      grid.innerHTML = results.map((r,i) => {
+        const a = areas[i];
+        if (r.status === "fulfilled") return card(a, r.value);
         return `
           <div class="card">
             <div class="row">
-              <div class="area">${area}</div>
-              <div class="badge attn">Error</div>
+              <span class="chip">${a}</span>
+              <span class="badge attn">Error</span>
             </div>
-            <dl>
-              <dt>Message</dt><dd>${r.reason && r.reason.message ? r.reason.message : "Load failed"}</dd>
-              <dt>Suggestion</dt><dd>Check area id or try refresh</dd>
-            </dl>
+            <div class="kpis" style="margin-top:14px">
+              <div class="kpi"><dt>Message</dt><dd>${r.reason && r.reason.message ? r.reason.message : "Load failed"}</dd></div>
+              <div class="kpi"><dt>Suggestion</dt><dd>Check area id, then refresh</dd></div>
+              <div class="kpi"><dt>Updated</dt><dd>n/a</dd></div>
+            </div>
           </div>
         `;
       }).join("");
-      document.getElementById("updated").textContent = "Updated: " + fmtTime(new Date().toISOString());
+      document.getElementById("updated").textContent = "Updated: " + fmt(new Date().toISOString());
     }
 
-    function addAreaFromInput() {
-      const inp = document.getElementById("addArea");
-      const val = inp.value.trim().toUpperCase();
+    function addArea() {
+      const input = document.getElementById("addArea");
+      const val = input.value.trim().toUpperCase();
       if (!val) return;
       const areas = loadAreas();
       if (!areas.includes(val)) {
         areas.push(val);
         saveAreas(areas);
-        render().catch(()=>{});
+        render();
       }
-      inp.value = "";
-      inp.focus();
+      input.value = "";
+      input.focus();
     }
 
-    document.getElementById("addBtn").addEventListener("click", addAreaFromInput);
-    document.getElementById("addArea").addEventListener("keydown", e => { if (e.key === "Enter") addAreaFromInput(); });
-    document.getElementById("refreshBtn").addEventListener("click", () => render().catch(()=>{}));
-    document.getElementById("clearBtn").addEventListener("click", () => { saveAreas([...DEFAULT_AREAS]); render().catch(()=>{}); });
+    document.getElementById("addBtn").addEventListener("click", addArea);
+    document.getElementById("addArea").addEventListener("keydown", e => { if (e.key === "Enter") addArea(); });
+    document.getElementById("refreshBtn").addEventListener("click", () => render());
+    document.getElementById("clearBtn").addEventListener("click", () => { saveAreas([...DEFAULTS]); render(); });
 
-    render().catch(()=>{});
-    setInterval(() => render().catch(()=>{}), 30000);
+    render();
+    setInterval(render, 30000);
   </script>
 </body>
 </html>
