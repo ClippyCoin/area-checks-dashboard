@@ -1,5 +1,3 @@
-import { Octokit } from "octokit";
-
 export default async (req, context) => {
   try {
     const url = new URL(req.url);
@@ -12,38 +10,23 @@ export default async (req, context) => {
     const yyyy = today.getUTCFullYear();
     const mm = String(today.getUTCMonth() + 1).padStart(2, "0");
     const dd = String(today.getUTCDate()).padStart(2, "0");
-    const todayFile = `data/${area.toLowerCase()}/${yyyy}-${mm}-${dd}.jsonl`;
+    const path = `data/${area.toLowerCase()}/${yyyy}-${mm}-${dd}.jsonl`;
 
-    const {
-      GITHUB_TOKEN,
-      GITHUB_REPO,
-      GITHUB_BRANCH,
-    } = process.env;
+    const { GITHUB_REPO, GITHUB_BRANCH, GITHUB_TOKEN } = process.env;
+    const [owner, repo] = (GITHUB_REPO || "").split("/");
+    const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${GITHUB_BRANCH}/${path}`;
 
-    const [owner, repo] = GITHUB_REPO.split("/");
-    const octokit = new Octokit({ auth: GITHUB_TOKEN });
+    const headers = GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {};
+    const res = await fetch(rawUrl, { headers });
 
-    let content = "";
-    try {
-      const res = await octokit.rest.repos.getContent({
-        owner, repo, path: todayFile, ref: GITHUB_BRANCH
-      });
-      content = Buffer.from(res.data.content, "base64").toString("utf8");
-    } catch (e) {
-      const body = {
-        area,
-        lastTime: null,
-        minutesSince: null,
-        issuesToday: 0,
-        status: "OK"
-      };
-      return new Response(JSON.stringify(body), {
-        status: 200,
-        headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" }
-      });
+    if (!res.ok) {
+      const body = { area, lastTime: null, minutesSince: null, issuesToday: 0, status: "OK" };
+      return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" } });
     }
 
+    const content = await res.text();
     const lines = content.split(/\r?\n/).filter(Boolean);
+
     if (lines.length === 0) {
       const body = { area, lastTime: null, minutesSince: null, issuesToday: 0, status: "OK" };
       return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
@@ -69,13 +52,10 @@ export default async (req, context) => {
     }
 
     const status = latestCount > 0 ? "Attention" : "OK";
-
     const body = { area, lastTime, minutesSince, issuesToday, status };
-    return new Response(JSON.stringify(body), {
-      status: 200,
-      headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" }
-    });
+
+    return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" } });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: err.message }), { status: 200, headers: { "Content-Type": "application/json" } });
   }
 };
