@@ -1,61 +1,81 @@
-export default async (req) => {
+import { Octokit } from "octokit";
+
+export default async (req, context) => {
   try {
     const url = new URL(req.url);
-    const area = (url.searchParams.get('area') || 'KILL').toUpperCase();
-    const dir = process.env.GITHUB_DATA_DIR || 'data';
-    const repo = process.env.GITHUB_REPO;
-    const branch = process.env.GITHUB_BRANCH || 'main';
+    const area = url.searchParams.get("area");
+    if (!area) {
+      return new Response(JSON.stringify({ error: "missing area" }), { status: 400 });
+    }
 
     const today = new Date();
-    const days = [0, 1];
-    const lines = [];
+    const yyyy = today.getUTCFullYear();
+    const mm = String(today.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(today.getUTCDate()).padStart(2, "0");
+    const todayFile = `data/${area.toLowerCase()}/${yyyy}-${mm}-${dd}.jsonl`;
 
-    const gh = async (path) => fetch(
-      `https://api.github.com/repos/${repo}/contents/${encodeURIComponent(path)}?ref=${branch}`,
-      { headers: { 'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`, 'Accept': 'application/vnd.github+json' } }
-    );
+    const {
+      GITHUB_TOKEN,
+      GITHUB_REPO,
+      GITHUB_BRANCH,
+    } = process.env;
 
-    for (const d of days) {
-      const dt = new Date(today.getTime() - d * 86400000);
-      const dayStr = dt.toISOString().slice(0, 10);
-      const path = `${dir}/${area.toLowerCase()}/${dayStr}.jsonl`;
-      const res = await gh(path);
-      if (res.status === 200) {
-        const j = await res.json();
-        const text = Buffer.from(j.content, 'base64').toString('utf8');
-        lines.push(...text.trim().split('\n').filter(Boolean));
-      }
+    const [owner, repo] = GITHUB_REPO.split("/");
+    const octokit = new Octokit({ auth: GITHUB_TOKEN });
+
+    let content = "";
+    try {
+      const res = await octokit.rest.repos.getContent({
+        owner, repo, path: todayFile, ref: GITHUB_BRANCH
+      });
+      content = Buffer.from(res.data.content, "base64").toString("utf8");
+    } catch (e) {
+      const body = {
+        area,
+        lastTime: null,
+        minutesSince: null,
+        issuesToday: 0,
+        status: "OK"
+      };
+      return new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" }
+      });
     }
 
-    const rows = lines.map(l => JSON.parse(l)).filter(r => r.area_id?.toUpperCase() === area);
-    const now = Date.now();
-    let lastTime = null;
-    for (const r of rows) {
-      const t = Date.parse(r.timestamp);
-      if (!isNaN(t) && (lastTime === null || t > lastTime)) lastTime = t;
+    const lines = content.split(/\r?\n/).filter(Boolean);
+    if (lines.length === 0) {
+      const body = { area, lastTime: null, minutesSince: null, issuesToday: 0, status: "OK" };
+      return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
     }
-    const minutesSince = lastTime === null ? null : Math.floor((now - lastTime) / 60000);
 
-    const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
-    const issuesToday = rows.filter(r => {
-      const t = Date.parse(r.timestamp);
-      return !isNaN(t) && t >= startOfDay.getTime() && Number(r.issue_count) > 0;
-    }).length;
+    let issuesToday = 0;
+    for (const line of lines) {
+      try {
+        const obj = JSON.parse(line);
+        const c = Number(obj.issue_count ?? 0);
+        if (!Number.isNaN(c)) issuesToday += c;
+      } catch {}
+    }
 
-    let status = 'Loading';
-    if (minutesSince === null) status = 'No Data';
-    else if (minutesSince <= 60 && issuesToday === 0) status = 'Good';
-    else if (minutesSince <= 60 && issuesToday > 0) status = 'Attention';
-    else status = 'Missed';
+    const latest = JSON.parse(lines[lines.length - 1]);
+    const latestCount = Number(latest.issue_count ?? 0);
+    const lastTime = latest.timestamp ?? latest.time ?? null;
 
-    return new Response(JSON.stringify({
-      area,
-      lastTime: lastTime ? new Date(lastTime).toISOString() : null,
-      minutesSince,
-      issuesToday,
-      status
-    }), { status: 200, headers: { 'content-type': 'application/json' } });
+    let minutesSince = null;
+    if (lastTime) {
+      const ms = Date.now() - new Date(lastTime).getTime();
+      minutesSince = Math.max(0, Math.floor(ms / 60000));
+    }
+
+    const status = latestCount > 0 ? "Attention" : "OK";
+
+    const body = { area, lastTime, minutesSince, issuesToday, status };
+    return new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" }
+    });
   } catch (err) {
-    return new Response(`Server error: ${err}`, { status: 500 });
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 };
