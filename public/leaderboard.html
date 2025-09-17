@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Leaderboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root { --bg:#0b0f1a; --panel:#0f172a; --muted:#9aa4b2; --text:#e6f0ff; --line:#192235; --ok:#16a34a; }
+    * { box-sizing:border-box; }
+    html,body { height:100%; margin:0; background:var(--bg); color:var(--text); font-family: Inter, system-ui, sans-serif; }
+    .wrap { max-width:900px; margin:0 auto; padding:18px 20px 28px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 12px; background:#10182b; border:1px solid var(--line); border-radius:16px; }
+    a.btn { text-decoration:none; background:#1b2745; color:var(--text); border:1px solid #263352; border-radius:12px; padding:10px 14px; font-weight:600; }
+    .card{ margin-top:16px; background:#0f172a; border:1px solid var(--line); border-radius:18px; padding:16px; }
+    table{ width:100%; border-collapse:collapse; }
+    th,td{ padding:10px 8px; border-bottom:1px solid #1e2943; text-align:left; }
+    th{ color:#a9b6d3; font-weight:700; font-size:12px; letter-spacing:.4px; }
+    .pct{ font-weight:800; }
+    .bar{ height:8px; background:#16213a; border-radius:999px; overflow:hidden; }
+    .fill{ height:8px; background:linear-gradient(90deg, #16a34a, #22d3ee); }
+    .muted{ color:var(--muted); font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>Leaderboard, last 7 plant days</div>
+      <div>
+        <a class="btn" href="/">Back</a>
+      </div>
+    </header>
+
+    <div class="card" id="meta"></div>
+    <div class="card">
+      <table id="tbl">
+        <thead>
+          <tr><th>Shift</th><th>Counted</th><th>Percent</th><th>Progress</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="muted" id="note"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = "https://plantopsareacheck.netlify.app/.netlify/functions/leaderboard";
+    function row(name, counted, percent, denom){
+      const pct = Math.max(0, Math.min(100, Number(percent)||0));
+      return `<tr>
+        <td>${name}</td>
+        <td>${counted} of ${denom}</td>
+        <td class="pct">${pct}%</td>
+        <td><div class="bar"><div class="fill" style="width:${pct}%"></div></div></td>
+      </tr>`;
+    }
+    fetch(API, { cache: "no-store" })
+      .then(r => r.json())
+      .then(j => {
+        const goalPerDay = 7;
+        const days = 7;
+        const denom = goalPerDay * days;
+        document.getElementById("meta").textContent = `Period ${j.period.start} to ${j.period.end} (${j.period.tz})`;
+        const tb = document.querySelector("#tbl tbody");
+        tb.innerHTML = [
+          row("1st shift", j.counted.first, j.percent.first, denom),
+          row("2nd shift", j.counted.second, j.percent.second, denom),
+          row("3rd shift", j.counted.third, j.percent.third, denom),
+        ].join("");
+        document.getElementById("note").textContent = "Counts above 8 do not increase percent. Goal is 7 per shift per plant day.";
+      })
+      .catch(() => {
+        document.getElementById("meta").textContent = "Error loading leaderboard";
+      });
+  </script>
+</body>
+</html>
