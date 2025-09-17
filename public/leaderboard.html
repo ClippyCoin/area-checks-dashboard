@@ -12,6 +12,7 @@
     header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 12px; background:#10182b; border:1px solid var(--line); border-radius:16px; }
     a.btn { text-decoration:none; background:#1b2745; color:var(--text); border:1px solid #263352; border-radius:12px; padding:10px 14px; font-weight:600; }
     .card{ margin-top:16px; background:#0f172a; border:1px solid var(--line); border-radius:18px; padding:16px; }
+    h2{ margin:0 0 6px 0; font-size:18px; }
     table{ width:100%; border-collapse:collapse; }
     th,td{ padding:10px 8px; border-bottom:1px solid #1e2943; text-align:left; }
     th{ color:#a9b6d3; font-weight:700; font-size:12px; letter-spacing:.4px; }
@@ -24,18 +25,14 @@
 <body>
   <div class="wrap">
     <header>
-      <div>Leaderboard, last 7 plant days</div>
-      <div>
-        <a class="btn" href="/">Back</a>
-      </div>
+      <div>Leaderboard, this work week Mon to Fri</div>
+      <div><a class="btn" href="/">Back</a></div>
     </header>
 
-    <div class="card" id="meta"></div>
+    <div class="card"><h2 id="meta">Loading</h2></div>
     <div class="card">
       <table id="tbl">
-        <thead>
-          <tr><th>Shift</th><th>Counted</th><th>Percent</th><th>Progress</th></tr>
-        </thead>
+        <thead><tr><th>Shift</th><th>Counted</th><th>Percent</th><th>Progress</th></tr></thead>
         <tbody></tbody>
       </table>
       <div class="muted" id="note"></div>
@@ -44,8 +41,9 @@
 
   <script>
     const API = "https://plantopsareacheck.netlify.app/.netlify/functions/leaderboard";
+    function clamp100(x){ x = Number(x)||0; if (x<0) return 0; if (x>100) return 100; return Math.round(x); }
     function row(name, counted, percent, denom){
-      const pct = Math.max(0, Math.min(100, Number(percent)||0));
+      const pct = clamp100(percent);
       return `<tr>
         <td>${name}</td>
         <td>${counted} of ${denom}</td>
@@ -57,20 +55,18 @@
       .then(r => r.json())
       .then(j => {
         const goalPerDay = 7;
-        const days = 7;
+        const days = 5;
         const denom = goalPerDay * days;
         document.getElementById("meta").textContent = `Period ${j.period.start} to ${j.period.end} (${j.period.tz})`;
         const tb = document.querySelector("#tbl tbody");
         tb.innerHTML = [
           row("1st shift", j.counted.first, j.percent.first, denom),
           row("2nd shift", j.counted.second, j.percent.second, denom),
-          row("3rd shift", j.counted.third, j.percent.third, denom),
+          row("3rd shift", j.counted.third, j.percent.third, denom)
         ].join("");
-        document.getElementById("note").textContent = "Counts above 8 do not increase percent. Goal is 7 per shift per plant day.";
+        document.getElementById("note").textContent = "Counts above 8 do not increase percent, goal is 7 per shift per plant day, period is Monday to Friday.";
       })
-      .catch(() => {
-        document.getElementById("meta").textContent = "Error loading leaderboard";
-      });
+      .catch(() => { document.getElementById("meta").textContent = "Error loading leaderboard"; });
   </script>
 </body>
 </html>
