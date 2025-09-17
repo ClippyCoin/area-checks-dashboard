@@ -37,6 +37,8 @@
     .kpi{ background:#111c34; border:1px solid var(--line); border-radius:14px; padding:12px; }
     .kpi dt{ font-size:12px; color:var(--muted); }
     .kpi dd{ margin:4px 0 0 0; font-size:18px; font-weight:700; }
+    .legend{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; color:var(--muted); font-size:12px; margin-top:6px; }
+    .chipc{ display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; }
     footer{ margin-top:18px; color:var(--muted); font-size:12px; text-align:center; }
   </style>
 </head>
@@ -48,29 +50,40 @@
     </header>
 
     <div class="controls">
+      <button id="autoBtn">Auto discover areas</button>
       <input type="text" id="addArea" placeholder="Add area id">
       <button id="addBtn">Add</button>
       <button id="refreshBtn">Refresh</button>
       <button id="clearBtn">Clear list</button>
     </div>
 
+    <div class="legend">
+      <span class="chipc" style="background:var(--ok)"></span> 0 OK
+      <span class="chipc" style="background:var(--y)"></span> 1 to 2 Attention
+      <span class="chipc" style="background:var(--o)"></span> 3 to 4 Alert
+      <span class="chipc" style="background:var(--r)"></span> 5 plus Critical
+    </div>
+
     <div class="grid" id="grid"></div>
-    <footer>Issues ring color thresholds: 0=OK, 1–2=Attention, 3–4=Alert, 5+=Critical.</footer>
+    <footer>Issues ring shows daily total by color thresholds. Status is computed server side to the same thresholds.</footer>
   </div>
 
   <script>
-    const API="https://plantopsareacheck.netlify.app/.netlify/functions/summary";
+    const API_SUM="https://plantopsareacheck.netlify.app/.netlify/functions/summary";
+    const API_AREAS="https://plantopsareacheck.netlify.app/.netlify/functions/areas";
     const STORE="plantops-areas";
     const DEFAULTS=["KILL"];
 
-    function loadAreas(){ try{const s=localStorage.getItem(STORE); const arr=s?JSON.parse(s):DEFAULTS; return Array.from(new Set(arr.map(v=>String(v||"").trim().toUpperCase()))).filter(Boolean);}catch{return[...DEFAULTS];} }
-    function saveAreas(a){ localStorage.setItem(STORE,JSON.stringify(a)); }
+    function uniq(arr){ return Array.from(new Set(arr)); }
+    function loadAreas(){ try{const s=localStorage.getItem(STORE); const arr=s?JSON.parse(s):DEFAULTS; return uniq(arr.map(v=>String(v||"").trim().toUpperCase()).filter(Boolean));}catch{return[...DEFAULTS];} }
+    function saveAreas(a){ localStorage.setItem(STORE, JSON.stringify(uniq(a))); }
     function fmt(iso){ if(!iso)return"n/a"; const d=new Date(iso); const p=n=>String(n).padStart(2,"0"); return d.getUTCFullYear()+"-"+p(d.getUTCMonth()+1)+"-"+p(d.getUTCDate())+" "+p(d.getUTCHours())+":"+p(d.getUTCMinutes())+":"+p(d.getUTCSeconds())+" UTC"; }
 
-    function statusBadge(issues){
-      if(issues===0) return '<span class="badge ok">OK</span>';
-      if(issues<=2) return '<span class="badge attn">Attention</span>';
-      if(issues<=4) return '<span class="badge alert">Alert</span>';
+    function badgeFromStatus(s){
+      const v=String(s||"").toUpperCase();
+      if(v==="OK") return '<span class="badge ok">OK</span>';
+      if(v==="ATTENTION") return '<span class="badge attn">Attention</span>';
+      if(v==="ALERT") return '<span class="badge alert">Alert</span>';
       return '<span class="badge crit">Critical</span>';
     }
 
@@ -79,18 +92,18 @@
       if(i===0) return `conic-gradient(var(--ok) 360deg, transparent 0)`;
       const cap=Math.min(i,15);
       const deg=n=>Math.round((n/15)*360);
-      let stops=[];
-      if(cap>=1){ const end=deg(Math.min(cap,2)); stops.push(`var(--y) ${end}deg`); }
-      if(cap>=3){ const end=deg(Math.min(cap,4)); stops.push(`var(--o) ${end}deg`); }
-      if(cap>=5){ const end=deg(cap); stops.push(`var(--r) ${end}deg`); }
-      stops.push(`rgba(255,255,255,0.06) 0`);
-      return `conic-gradient(${stops.join(",")})`;
+      const parts=[];
+      if(cap>=1){ const end=deg(Math.min(cap,2)); parts.push(`var(--y) ${end}deg`); }
+      if(cap>=3){ const end=deg(Math.min(cap,4)); parts.push(`var(--o) ${end}deg`); }
+      if(cap>=5){ const end=deg(cap); parts.push(`var(--r) ${end}deg`); }
+      parts.push(`rgba(255,255,255,0.06) 0`);
+      return `conic-gradient(${parts.join(",")})`;
     }
 
-    function issuesRing(issues){ const gradient=ringGradient(issues); return `<div class="ring" style="--gradient:${gradient}"><div class="ringVal">${issues}</div></div>`; }
+    function issuesRing(issues){ const gradient=ringGradient(issues); return `<div class="ring" style="--gradient:${gradient}"><div class="ringVal">${Number(issues||0)}</div></div>`; }
 
     function card(area,d){
-      const badge=statusBadge(d.issuesToday);
+      const badge=badgeFromStatus(d.status);
       return `
         <div class="card">
           <div class="row">
@@ -111,16 +124,45 @@
       `;
     }
 
-    async function fetchArea(a){ const res=await fetch(API+"?area="+encodeURIComponent(a),{cache:"no-store"}); if(!res.ok)throw new Error("HTTP "+res.status); return res.json(); }
-    async function render(){ const areas=loadAreas(); const results=await Promise.allSettled(areas.map(fetchArea)); document.getElementById("grid").innerHTML=results.map((r,i)=>{ const a=areas[i]; if(r.status==="fulfilled") return card(a,r.value); return `<div class="card"><div class="row"><span class="chip">${a}</span><span class="badge crit">Error</span></div></div>`; }).join(""); document.getElementById("updated").textContent="Updated: "+fmt(new Date().toISOString()); }
-    function addArea(){ const val=document.getElementById("addArea").value.trim().toUpperCase(); if(!val)return; const areas=loadAreas(); if(!areas.includes(val)){ areas.push(val); saveAreas(areas); render(); } document.getElementById("addArea").value=""; }
+    async function fetchSummary(a){ const res=await fetch(API_SUM+"?area="+encodeURIComponent(a),{cache:"no-store"}); if(!res.ok)throw new Error("HTTP "+res.status); return res.json(); }
+    async function fetchAreas(){ const res=await fetch(API_AREAS,{cache:"no-store"}); if(!res.ok)throw new Error("HTTP "+res.status); const j=await res.json(); return Array.isArray(j.areas)?j.areas:[]; }
 
+    async function render(){
+      const container=document.getElementById("grid");
+      const areas=loadAreas();
+      const results=await Promise.allSettled(areas.map(fetchSummary));
+      container.innerHTML=results.map((r,i)=>{ const a=areas[i]; if(r.status==="fulfilled") return card(a,r.value);
+        return `<div class="card"><div class="row"><span class="chip">${a}</span><span class="badge crit">Error</span></div></div>`; }).join("");
+      document.getElementById("updated").textContent="Updated: "+fmt(new Date().toISOString());
+    }
+
+    async function autoDiscover(){
+      try{
+        const discovered=await fetchAreas();
+        if(discovered.length){
+          saveAreas(discovered);
+          await render();
+        }
+      }catch{}
+    }
+
+    function addArea(){
+      const input=document.getElementById("addArea");
+      const val=input.value.trim().toUpperCase();
+      if(!val) return;
+      const areas=loadAreas();
+      if(!areas.includes(val)){ areas.push(val); saveAreas(areas); render(); }
+      input.value=""; input.focus();
+    }
+
+    document.getElementById("autoBtn").addEventListener("click",()=>autoDiscover());
     document.getElementById("addBtn").addEventListener("click",addArea);
-    document.getElementById("addArea").addEventListener("keydown",e=>{if(e.key==="Enter")addArea();});
+    document.getElementById("addArea").addEventListener("keydown",e=>{ if(e.key==="Enter") addArea(); });
     document.getElementById("refreshBtn").addEventListener("click",()=>render());
-    document.getElementById("clearBtn").addEventListener("click",()=>{saveAreas([...DEFAULTS]);render();});
+    document.getElementById("clearBtn").addEventListener("click",()=>{ saveAreas([...DEFAULTS]); render(); });
 
-    render(); setInterval(render,30000);
+    autoDiscover().then(render);
+    setInterval(render,30000);
   </script>
 </body>
 </html>
