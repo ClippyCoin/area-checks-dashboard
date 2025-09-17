@@ -87,6 +87,14 @@
       return '<span class="badge crit">Critical</span>';
     }
 
+    function colorToken(issues){
+      const i=Math.max(0,Number(issues)||0);
+      if(i===0) return "var(--ok)";
+      if(i<=2) return "var(--y)";
+      if(i<=4) return "var(--o)";
+      return "var(--r)";
+    }
+
     function ringGradient(issues){
       const i=Math.max(0,Number(issues)||0);
       if(i===0) return `conic-gradient(var(--ok) 360deg, transparent 0)`;
@@ -100,10 +108,16 @@
       return `conic-gradient(${parts.join(",")})`;
     }
 
-    function issuesRing(issues){ const gradient=ringGradient(issues); return `<div class="ring" style="--gradient:${gradient}"><div class="ringVal">${Number(issues||0)}</div></div>`; }
+    function issuesRing(issues){
+      const n = Math.max(0, Number(issues) || 0);
+      const gradient = ringGradient(n);
+      const txt = colorToken(n);
+      return `<div class="ring" style="--gradient:${gradient}"><div class="ringVal" style="color:${txt}">${n}</div></div>`;
+    }
 
     function card(area,d){
       const badge=badgeFromStatus(d.status);
+      const issues = Math.max(0, Number(d.issuesToday) || 0);
       return `
         <div class="card">
           <div class="row">
@@ -112,7 +126,7 @@
           </div>
           <div class="ringBox">
             <div class="ringWrap">
-              ${issuesRing(d.issuesToday)}
+              ${issuesRing(issues)}
               <div class="ringLabel">ISSUES</div>
             </div>
             <div class="kpis">
