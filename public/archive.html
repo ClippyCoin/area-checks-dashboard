@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Archive</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root { --bg:#0b0f1a; --panel:#0f172a; --muted:#9aa4b2; --text:#e6f0ff; --line:#192235; --ok:#16a34a; }
+    * { box-sizing:border-box; }
+    html,body { height:100%; margin:0; background:var(--bg); color:var(--text); font-family: Inter, system-ui, sans-serif; }
+    .wrap { max-width:900px; margin:0 auto; padding:18px 20px 28px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; background:#10182b; border:1px solid var(--line); border-radius:16px; }
+    .btn { text-decoration:none; display:inline-block; background:#1b2745; color:var(--text); border:1px solid #263352; border-radius:12px; padding:10px 14px; font-weight:600; cursor:pointer; }
+    .card{ margin-top:16px; background:#0f172a; border:1px solid var(--line); border-radius:18px; padding:16px; }
+    table{ width:100%; border-collapse:collapse; }
+    th,td{ padding:10px 8px; border-bottom:1px solid #1e2943; text-align:left; }
+    th{ color:#a9b6d3; font-weight:700; font-size:12px; letter-spacing:.4px; }
+    .winner{ font-weight:800; color:#d1fae5; }
+    .muted{ color:var(--muted); font-size:12px; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>Weekly archive</div>
+      <div>
+        <button class="btn" id="finalizeBtn">Finalize current week</button>
+        <a class="btn" href="/">Back</a>
+      </div>
+    </header>
+
+    <div class="card">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>Week</th>
+            <th>Winner</th>
+            <th>1st</th>
+            <th>2nd</th>
+            <th>3rd</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="muted">Finalizing writes one JSON file per week under archive in the repo. Idempotent: if the file exists, it is reused.</div>
+    </div>
+  </div>
+
+  <script>
+    const API = "/.netlify/functions/archive";
+    function row(w) {
+      const pct = w.percent || {};
+      return `<tr>
+        <td>${w.period.start} to ${w.period.end}</td>
+        <td class="winner">${w.winner}</td>
+        <td>${pct.first ?? 0}%</td>
+        <td>${pct.second ?? 0}%</td>
+        <td>${pct.third ?? 0}%</td>
+      </tr>`;
+    }
+    function load() {
+      fetch(API, { cache: "no-store" })
+        .then(r => r.json())
+        .then(j => {
+          const tb = document.querySelector("#tbl tbody");
+          tb.innerHTML = (j.weeks || []).map(row).join("");
+        })
+        .catch(() => {});
+    }
+    document.getElementById("finalizeBtn").addEventListener("click", () => {
+      fetch(API, { method: "POST" })
+        .then(r => r.json())
+        .then(() => load())
+        .catch(() => {});
+    });
+    load();
+  </script>
+</body>
+</html>
