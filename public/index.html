@@ -5,9 +5,7 @@
   <title>Plant Ops Area Check</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    :root { --bg:#0b0f1a; --panel:#0f172a; --muted:#9aa4b2; --text:#e6f0ff; --line:#192235;
-            --ok:#16a34a; --y:#facc15; --o:#fb923c; --r:#ef4444;
-            --chip:#111827; --chipb:#22314d; }
+    :root { --bg:#0b0f1a; --panel:#0f172a; --muted:#9aa4b2; --text:#e6f0ff; --line:#192235; --ok:#16a34a; --y:#facc15; --o:#fb923c; --r:#ef4444; --chip:#111827; --chipb:#22314d; }
     * { box-sizing:border-box; }
     html,body { height:100%; margin:0; background:var(--bg); color:var(--text); font-family: Inter, system-ui, sans-serif; }
     .wrap { max-width:1200px; margin:0 auto; padding:18px 20px 28px; }
@@ -29,10 +27,10 @@
     .ringBox{ display:flex; align-items:center; gap:16px; margin-top:14px; }
     .ringWrap{ display:grid; justify-items:center; }
     .ringLabel{ font-size:12px; color:var(--muted); margin-top:6px; }
-    .ring{ position:relative; width:96px; height:96px; border-radius:50%; display:grid; place-items:center; }
-    .ring::before{ content:""; position:absolute; inset:0; border-radius:50%; background:var(--gradient); }
-    .ring::after{ content:""; position:absolute; inset:10px; border-radius:50%; background:#0b1220; border:1px solid var(--line); }
-    .ringVal{ position:relative; font-size:22px; font-weight:800; }
+    .ring{ position:relative; width:96px; height:96px; border-radius:50%; }
+    .ring::before{ content:""; position:absolute; inset:0; border-radius:50%; background:var(--gradient); z-index:0; }
+    .ring::after{ content:""; position:absolute; inset:10px; border-radius:50%; background:#0b1220; border:1px solid var(--line); z-index:1; }
+    .ringVal{ position:absolute; inset:0; display:grid; place-items:center; font-size:22px; font-weight:800; z-index:2; }
     .kpis{ display:grid; grid-template-columns:1fr 1fr; gap:12px; flex:1; }
     .kpi{ background:#111c34; border:1px solid var(--line); border-radius:14px; padding:12px; }
     .kpi dt{ font-size:12px; color:var(--muted); }
@@ -109,15 +107,15 @@
     }
 
     function issuesRing(issues){
-      const n = Math.max(0, Number(issues) || 0);
-      const gradient = ringGradient(n);
-      const txt = colorToken(n);
+      const n=Math.max(0,Number(issues)||0);
+      const gradient=ringGradient(n);
+      const txt=colorToken(n);
       return `<div class="ring" style="--gradient:${gradient}"><div class="ringVal" style="color:${txt}">${n}</div></div>`;
     }
 
     function card(area,d){
       const badge=badgeFromStatus(d.status);
-      const issues = Math.max(0, Number(d.issuesToday) || 0);
+      const issues=Math.max(0, Number(d.issuesToday)||0);
       return `
         <div class="card">
           <div class="row">
@@ -145,8 +143,7 @@
       const container=document.getElementById("grid");
       const areas=loadAreas();
       const results=await Promise.allSettled(areas.map(fetchSummary));
-      container.innerHTML=results.map((r,i)=>{ const a=areas[i]; if(r.status==="fulfilled") return card(a,r.value);
-        return `<div class="card"><div class="row"><span class="chip">${a}</span><span class="badge crit">Error</span></div></div>`; }).join("");
+      container.innerHTML=results.map((r,i)=>{ const a=areas[i]; if(r.status==="fulfilled") return card(a,r.value); return `<div class="card"><div class="row"><span class="chip">${a}</span><span class="badge crit">Error</span></div></div>`; }).join("");
       document.getElementById("updated").textContent="Updated: "+fmt(new Date().toISOString());
     }
 
@@ -173,7 +170,7 @@
     document.getElementById("addBtn").addEventListener("click",addArea);
     document.getElementById("addArea").addEventListener("keydown",e=>{ if(e.key==="Enter") addArea(); });
     document.getElementById("refreshBtn").addEventListener("click",()=>render());
-    document.getElementById("clearBtn").addEventListener("click",()=>{ saveAreas([...DEFAULTS]); render(); });
+    document.getElementById("clearBtn").addEventListener("click",()=>{ saveAreas(["KILL"]); render(); });
 
     autoDiscover().then(render);
     setInterval(render,30000);
