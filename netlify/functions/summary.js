@@ -6,44 +6,91 @@ export default async (req, context) => {
       return new Response(JSON.stringify({ error: "missing area" }), { status: 400 });
     }
 
-    const today = new Date();
-    const yyyy = today.getUTCFullYear();
-    const mm = String(today.getUTCMonth() + 1).padStart(2, "0");
-    const dd = String(today.getUTCDate()).padStart(2, "0");
-    const path = `data/${area.toLowerCase()}/${yyyy}-${mm}-${dd}.jsonl`;
-
     const { GITHUB_REPO, GITHUB_BRANCH, GITHUB_TOKEN } = process.env;
     const [owner, repo] = (GITHUB_REPO || "").split("/");
-    const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${GITHUB_BRANCH}/${path}`;
-    const headers = GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {};
-    const res = await fetch(rawUrl, { headers });
+    const baseRaw = `https://raw.githubusercontent.com/${owner}/${repo}/${GITHUB_BRANCH}`;
+    const tz = "America/Chicago";
 
-    if (!res.ok) {
-      const body = { area, lastTime: null, minutesSince: null, issuesToday: 0, latestCount: 0, status: "OK" };
-      return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" } });
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+    const parts = o => Object.fromEntries(fmt.formatToParts(o).map(p => [p.type, p.value]));
+    const pad2 = n => String(n).padStart(2, "0");
+    const ymd = d => { const p = parts(d); return `${p.year}-${p.month}-${p.day}`; };
+    const hm = d => { const p = parts(d); return `${p.hour}:${p.minute}`; };
+
+    const todayY = ymd(now);
+    const yest = new Date(now.getTime() - 24 * 3600 * 1000);
+    const tom = new Date(now.getTime() + 24 * 3600 * 1000);
+    const yestY = ymd(yest);
+    const tomY = ymd(tom);
+
+    const nowHM = hm(now);
+    const plantStartY = nowHM >= "05:30" ? todayY : yestY;
+    const plantNextY = plantStartY === todayY ? tomY : todayY;
+
+    const filePaths = [
+      `data/${area.toLowerCase()}/${yestY}.jsonl`,
+      `data/${area.toLowerCase()}/${todayY}.jsonl`,
+      `data/${area.toLowerCase()}/${tomY}.jsonl`,
+    ];
+
+    async function fetchText(path) {
+      const res = await fetch(`${baseRaw}/${path}`, GITHUB_TOKEN ? { headers: { Authorization: `Bearer ${GITHUB_TOKEN}` } } : undefined);
+      if (!res.ok) return "";
+      return res.text();
     }
 
-    const content = await res.text();
-    const lines = content.split(/\r?\n/).filter(Boolean);
+    let lines = [];
+    for (const pth of filePaths) {
+      const txt = await fetchText(pth);
+      if (txt) {
+        lines.push(...txt.split(/\r?\n/).filter(Boolean));
+      }
+    }
 
-    if (lines.length === 0) {
-      const body = { area, lastTime: null, minutesSince: null, issuesToday: 0, latestCount: 0, status: "OK" };
-      return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
+    function inPlantDay(localY, localHM) {
+      if (localY === plantStartY && localHM >= "05:30") return true;
+      if (localY === plantNextY && localHM < "05:30") return true;
+      return false;
+    }
+
+    function whichShift(localHM) {
+      if (localHM >= "05:00" && localHM < "13:00") return "first";
+      if (localHM >= "13:00" && localHM < "21:00") return "second";
+      if (localHM >= "21:00" || localHM < "05:30") return "third";
+      return "none";
     }
 
     let issuesToday = 0;
+    let latest = null;
+    let first = 0, second = 0, third = 0;
+
     for (const line of lines) {
       try {
         const obj = JSON.parse(line);
-        const c = Number(obj.issue_count ?? 0);
-        if (!Number.isNaN(c)) issuesToday += c;
+        const ts = new Date(obj.timestamp || obj.time || 0);
+        if (isNaN(ts)) continue;
+
+        const localY = ymd(ts);
+        const localHM = hm(ts);
+
+        if (inPlantDay(localY, localHM)) {
+          // daily sum from lines in plant window
+          const c = Number(obj.issue_count ?? 0);
+          if (!Number.isNaN(c)) issuesToday += c;
+
+          // shift counts count submissions, not issue_count
+          const s = whichShift(localHM);
+          if (s === "first") first += 1;
+          else if (s === "second") second += 1;
+          else if (s === "third") third += 1;
+        }
+
+        latest = ts; // last line wins
       } catch {}
     }
 
-    const latest = JSON.parse(lines[lines.length - 1]);
-    const latestCount = Number(latest.issue_count ?? 0);
-    const lastTime = latest.timestamp ?? latest.time ?? null;
-
+    const lastTime = latest ? latest.toISOString() : null;
     let minutesSince = null;
     if (lastTime) {
       const ms = Date.now() - new Date(lastTime).getTime();
@@ -55,7 +102,17 @@ export default async (req, context) => {
     else if (issuesToday >= 3) status = "Alert";
     else if (issuesToday >= 1) status = "Attention";
 
-    const body = { area, lastTime, minutesSince, issuesToday, latestCount, status };
+    const body = {
+      area,
+      lastTime,
+      minutesSince,
+      issuesToday,
+      latestCount: 0,
+      status,
+      shiftCountsToday: { first, second, third },
+      meta: { plantStart: `${plantStartY}T05:30:00`, tz }
+    };
+
     return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" } });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 200, headers: { "Content-Type": "application/json" } });
