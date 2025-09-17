@@ -38,8 +38,8 @@
     .legend{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; color:var(--muted); font-size:12px; margin-top:6px; }
     .chipc{ display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; }
     footer{ margin-top:18px; color:var(--muted); font-size:12px; text-align:center; }
+    .lines{ margin:0; padding:0; }
     .lines li{ display:flex; justify-content:space-between; list-style:none; padding:2px 0; }
-    .dot{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; vertical-align:middle; }
   </style>
 </head>
 <body>
@@ -56,6 +56,7 @@
       <button id="refreshBtn">Refresh</button>
       <button id="clearBtn">Clear list</button>
       <button id="leaderBtn" onclick="location.href='leaderboard.html'">Leaderboard</button>
+      <button id="archiveBtn" onclick="location.href='archive.html'">Archive</button>
     </div>
 
     <div class="legend">
@@ -67,7 +68,7 @@
     </div>
 
     <div class="grid" id="grid"></div>
-    <footer>Issues ring shows daily sum. Shift submittals count submissions in the current plant day, 05:30 to 05:30 local.</footer>
+    <footer>Issues ring shows daily total with thresholds, Shift submittals use plant day 05:00 to 05:00 local.</footer>
   </div>
 
   <script>
@@ -89,7 +90,7 @@
       return '<span class="badge crit">Critical</span>';
     }
 
-    function colorForCount(n){
+    function shiftColor(n){
       if(n>=9) return "var(--w)";
       if(n>=7) return "var(--ok)";
       if(n>=5) return "var(--y)";
@@ -97,25 +98,34 @@
       return "var(--r)";
     }
 
-    function ringGradient(issues){
+    function issuesTextColor(issues){
+      const i=Math.max(0,Number(issues)||0);
+      if(i===0) return "var(--ok)";
+      if(i<=2) return "var(--y)";
+      if(i<=4) return "var(--o)";
+      return "var(--r)";
+    }
+
+    function ringGradientIssues(issues){
       const i=Math.max(0,Number(issues)||0);
       if(i===0) return `conic-gradient(var(--ok) 360deg, transparent 0)`;
       const cap=Math.min(i,15);
       const deg=n=>Math.round((n/15)*360);
       const parts=[];
-      if(cap>=1){ const end=deg(Math.min(cap,2)); parts.push(`var(--y) ${end}deg`); }
-      if(cap>=3){ const end=deg(Math.min(cap,4)); parts.push(`var(--o) ${end}deg`); }
-      if(cap>=5){ const end=deg(Math.min(cap,6)); parts.push(`var(--y) ${end}deg`); }
-      if(cap>=7){ const end=deg(Math.min(cap,8)); parts.push(`var(--ok) ${end}deg`); }
-      if(cap>=9){ const end=deg(cap); parts.push(`var(--w) ${end}deg`); }
+      const yEnd=deg(Math.min(cap,6));
+      const oEnd=deg(Math.min(cap,10));
+      const rEnd=deg(cap);
+      if(yEnd>0) parts.push(`var(--y) ${yEnd}deg`);
+      if(oEnd>yEnd) parts.push(`var(--o) ${oEnd}deg`);
+      if(rEnd>oEnd) parts.push(`var(--r) ${rEnd}deg`);
       parts.push(`rgba(255,255,255,0.06) 0`);
       return `conic-gradient(${parts.join(",")})`;
     }
 
     function issuesRing(issues){
       const n=Math.max(0,Number(issues)||0);
-      const gradient=ringGradient(n);
-      const color=colorForCount(n);
+      const gradient=ringGradientIssues(n);
+      const color=issuesTextColor(n);
       return `<div class="ring" style="--gradient:${gradient}"><div class="ringVal" style="color:${color}">${n}</div></div>`;
     }
 
@@ -123,7 +133,7 @@
       const f = Number(sc?.first||0);
       const s = Number(sc?.second||0);
       const t = Number(sc?.third||0);
-      const line = (label,val) => `<li><span>${label}</span><span style="color:${colorForCount(val)}">${val}</span></li>`;
+      const line = (label,val) => `<li><span>${label}</span><span style="color:${shiftColor(val)}">${val}</span></li>`;
       return `<ul class="lines">${line("1st shift",f)}${line("2nd shift",s)}${line("3rd shift",t)}</ul>`;
     }
 
