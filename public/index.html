@@ -5,7 +5,7 @@
   <title>Plant Ops Area Check</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    :root { --bg:#0b0f1a; --panel:#0f172a; --muted:#9aa4b2; --text:#e6f0ff; --line:#192235; --ok:#16a34a; --y:#facc15; --o:#fb923c; --r:#ef4444; --chip:#111827; --chipb:#22314d; }
+    :root { --bg:#0b0f1a; --panel:#0f172a; --muted:#9aa4b2; --text:#e6f0ff; --line:#192235; --ok:#16a34a; --y:#facc15; --o:#fb923c; --r:#ef4444; --w:#e5e7eb; --chip:#111827; --chipb:#22314d; }
     * { box-sizing:border-box; }
     html,body { height:100%; margin:0; background:var(--bg); color:var(--text); font-family: Inter, system-ui, sans-serif; }
     .wrap { max-width:1200px; margin:0 auto; padding:18px 20px 28px; }
@@ -15,7 +15,7 @@
     .controls { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 14px; }
     input[type=text]{ background:#0b1324; color:var(--text); border:1px solid var(--line); border-radius:12px; padding:10px 12px; min-width:200px; }
     button{ background:#1b2745; color:var(--text); border:1px solid #263352; border-radius:12px; padding:10px 14px; font-weight:600; cursor:pointer; }
-    .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap:16px; }
+    .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap:16px; }
     .card{ background:#0f172a; border:1px solid var(--line); border-radius:18px; padding:16px; }
     .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .chip{ background:linear-gradient(180deg, var(--chip), var(--chipb)); border:1px solid #2a3a5a; color:#cad7f5; padding:6px 12px; border-radius:999px; font-weight:700; }
@@ -38,6 +38,8 @@
     .legend{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; color:var(--muted); font-size:12px; margin-top:6px; }
     .chipc{ display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; }
     footer{ margin-top:18px; color:var(--muted); font-size:12px; text-align:center; }
+    .lines li{ display:flex; justify-content:space-between; list-style:none; padding:2px 0; }
+    .dot{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; vertical-align:middle; }
   </style>
 </head>
 <body>
@@ -53,17 +55,19 @@
       <button id="addBtn">Add</button>
       <button id="refreshBtn">Refresh</button>
       <button id="clearBtn">Clear list</button>
+      <button id="leaderBtn" onclick="location.href='leaderboard.html'">Leaderboard</button>
     </div>
 
     <div class="legend">
-      <span class="chipc" style="background:var(--ok)"></span> 0 OK
-      <span class="chipc" style="background:var(--y)"></span> 1 to 2 Attention
-      <span class="chipc" style="background:var(--o)"></span> 3 to 4 Alert
-      <span class="chipc" style="background:var(--r)"></span> 5 plus Critical
+      <span class="chipc" style="background:var(--r)"></span> 0 to 2
+      <span class="chipc" style="background:var(--o)"></span> 3 to 4
+      <span class="chipc" style="background:var(--y)"></span> 5 to 6
+      <span class="chipc" style="background:var(--ok)"></span> 7 to 8
+      <span class="chipc" style="background:var(--w)"></span> 9 plus
     </div>
 
     <div class="grid" id="grid"></div>
-    <footer>Issues ring shows daily total by color thresholds. Status is computed server side to the same thresholds.</footer>
+    <footer>Issues ring shows daily sum. Shift submittals count submissions in the current plant day, 05:30 to 05:30 local.</footer>
   </div>
 
   <script>
@@ -72,7 +76,7 @@
     const STORE="plantops-areas";
     const DEFAULTS=["KILL"];
 
-    function uniq(arr){ return Array.from(new Set(arr)); }
+    function uniq(a){ return Array.from(new Set(a)); }
     function loadAreas(){ try{const s=localStorage.getItem(STORE); const arr=s?JSON.parse(s):DEFAULTS; return uniq(arr.map(v=>String(v||"").trim().toUpperCase()).filter(Boolean));}catch{return[...DEFAULTS];} }
     function saveAreas(a){ localStorage.setItem(STORE, JSON.stringify(uniq(a))); }
     function fmt(iso){ if(!iso)return"n/a"; const d=new Date(iso); const p=n=>String(n).padStart(2,"0"); return d.getUTCFullYear()+"-"+p(d.getUTCMonth()+1)+"-"+p(d.getUTCDate())+" "+p(d.getUTCHours())+":"+p(d.getUTCMinutes())+":"+p(d.getUTCSeconds())+" UTC"; }
@@ -85,11 +89,11 @@
       return '<span class="badge crit">Critical</span>';
     }
 
-    function colorToken(issues){
-      const i=Math.max(0,Number(issues)||0);
-      if(i===0) return "var(--ok)";
-      if(i<=2) return "var(--y)";
-      if(i<=4) return "var(--o)";
+    function colorForCount(n){
+      if(n>=9) return "var(--w)";
+      if(n>=7) return "var(--ok)";
+      if(n>=5) return "var(--y)";
+      if(n>=3) return "var(--o)";
       return "var(--r)";
     }
 
@@ -101,7 +105,9 @@
       const parts=[];
       if(cap>=1){ const end=deg(Math.min(cap,2)); parts.push(`var(--y) ${end}deg`); }
       if(cap>=3){ const end=deg(Math.min(cap,4)); parts.push(`var(--o) ${end}deg`); }
-      if(cap>=5){ const end=deg(cap); parts.push(`var(--r) ${end}deg`); }
+      if(cap>=5){ const end=deg(Math.min(cap,6)); parts.push(`var(--y) ${end}deg`); }
+      if(cap>=7){ const end=deg(Math.min(cap,8)); parts.push(`var(--ok) ${end}deg`); }
+      if(cap>=9){ const end=deg(cap); parts.push(`var(--w) ${end}deg`); }
       parts.push(`rgba(255,255,255,0.06) 0`);
       return `conic-gradient(${parts.join(",")})`;
     }
@@ -109,8 +115,16 @@
     function issuesRing(issues){
       const n=Math.max(0,Number(issues)||0);
       const gradient=ringGradient(n);
-      const txt=colorToken(n);
-      return `<div class="ring" style="--gradient:${gradient}"><div class="ringVal" style="color:${txt}">${n}</div></div>`;
+      const color=colorForCount(n);
+      return `<div class="ring" style="--gradient:${gradient}"><div class="ringVal" style="color:${color}">${n}</div></div>`;
+    }
+
+    function submittalsList(sc){
+      const f = Number(sc?.first||0);
+      const s = Number(sc?.second||0);
+      const t = Number(sc?.third||0);
+      const line = (label,val) => `<li><span>${label}</span><span style="color:${colorForCount(val)}">${val}</span></li>`;
+      return `<ul class="lines">${line("1st shift",f)}${line("2nd shift",s)}${line("3rd shift",t)}</ul>`;
     }
 
     function card(area,d){
@@ -129,7 +143,7 @@
             </div>
             <div class="kpis">
               <div class="kpi"><dt>Last time</dt><dd>${fmt(d.lastTime)}</dd></div>
-              <div class="kpi"><dt>Status</dt><dd>${d.status}</dd></div>
+              <div class="kpi"><dt>Shift submittals</dt><dd>${submittalsList(d.shiftCountsToday)}</dd></div>
             </div>
           </div>
         </div>
@@ -143,8 +157,9 @@
       const container=document.getElementById("grid");
       const areas=loadAreas();
       const results=await Promise.allSettled(areas.map(fetchSummary));
-      container.innerHTML=results.map((r,i)=>{ const a=areas[i]; if(r.status==="fulfilled") return card(a,r.value); return `<div class="card"><div class="row"><span class="chip">${a}</span><span class="badge crit">Error</span></div></div>`; }).join("");
-      document.getElementById("updated").textContent="Updated: "+fmt(new Date().toISOString());
+      container.innerHTML=results.map((r,i)=>{ const a=areas[i]; if(r.status==="fulfilled") return card(a,r.value);
+        return `<div class="card"><div class="row"><span class="chip">${a}</span><span class="badge crit">Error</span></div></div>`; }).join("");
+      document.getElementById("updated").textContent="Updated: "+new Date().toISOString().replace("T"," ").replace("Z"," UTC");
     }
 
     async function autoDiscover(){
