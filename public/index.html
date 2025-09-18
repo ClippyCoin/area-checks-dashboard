@@ -5,41 +5,47 @@
   <title>Plant Ops Area Check</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    :root { --bg:#0b0f1a; --panel:#0f172a; --muted:#9aa4b2; --text:#e6f0ff; --line:#192235; --ok:#16a34a; --y:#facc15; --o:#fb923c; --r:#ef4444; --w:#e5e7eb; --chip:#111827; --chipb:#22314d; }
-    * { box-sizing:border-box; }
-    html,body { height:100%; margin:0; background:var(--bg); color:var(--text); font-family: Inter, system-ui, sans-serif; }
-    .wrap { max-width:1200px; margin:0 auto; padding:18px 20px 28px; }
-    header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 12px; background:#10182b; border:1px solid var(--line); border-radius:16px; }
-    h1 { margin:0; font-size:18px; }
-    .updated { font-size:13px; color:var(--muted); }
-    .controls { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 14px; }
-    input[type=text]{ background:#0b1324; color:var(--text); border:1px solid var(--line); border-radius:12px; padding:10px 12px; min-width:200px; }
-    button{ background:#1b2745; color:var(--text); border:1px solid #263352; border-radius:12px; padding:10px 14px; font-weight:600; cursor:pointer; }
-    .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap:16px; }
-    .card{ background:#0f172a; border:1px solid var(--line); border-radius:18px; padding:16px; }
-    .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .chip{ background:linear-gradient(180deg, var(--chip), var(--chipb)); border:1px solid #2a3a5a; color:#cad7f5; padding:6px 12px; border-radius:999px; font-weight:700; }
-    .badge{ padding:6px 12px; border-radius:999px; font-size:12px; font-weight:800; }
-    .ok{ background:rgba(22,163,74,0.15); border:1px solid rgba(22,163,74,0.4); color:#b7f7c7; }
-    .attn{ background:rgba(250,204,21,0.15); border:1px solid rgba(250,204,21,0.4); color:#fef9c3; }
-    .alert{ background:rgba(251,146,60,0.15); border:1px solid rgba(251,146,60,0.4); color:#ffedd5; }
-    .crit{ background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#fecaca; }
-    .ringBox{ display:flex; align-items:center; gap:16px; margin-top:14px; }
-    .ringWrap{ display:grid; justify-items:center; }
-    .ringLabel{ font-size:12px; color:var(--muted); margin-top:6px; }
-    .ring{ position:relative; width:96px; height:96px; border-radius:50%; }
-    .ring::before{ content:""; position:absolute; inset:0; border-radius:50%; background:var(--gradient); z-index:0; }
-    .ring::after{ content:""; position:absolute; inset:10px; border-radius:50%; background:#0b1220; border:1px solid var(--line); z-index:1; }
-    .ringVal{ position:absolute; inset:0; display:grid; place-items:center; font-size:22px; font-weight:800; z-index:2; }
-    .kpis{ display:grid; grid-template-columns:1fr 1fr; gap:12px; flex:1; }
-    .kpi{ background:#111c34; border:1px solid var(--line); border-radius:14px; padding:12px; }
-    .kpi dt{ font-size:12px; color:var(--muted); }
-    .kpi dd{ margin:4px 0 0 0; font-size:18px; font-weight:700; }
-    .legend{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; color:var(--muted); font-size:12px; margin-top:6px; }
-    .chipc{ display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; }
-    footer{ margin-top:18px; color:var(--muted); font-size:12px; text-align:center; }
-    .lines{ margin:0; padding:0; }
-    .lines li{ display:flex; justify-content:space-between; list-style:none; padding:2px 0; }
+    :root{--bg:#0b0f1a;--panel:#0f172a;--muted:#9aa4b2;--text:#e6f0ff;--line:#192235;--ok:#16a34a;--y:#facc15;--o:#fb923c;--r:#ef4444;--w:#e5e7eb}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+    .wrap{max-width:1200px;margin:0 auto;padding:18px 20px 28px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 12px;background:#10182b;border:1px solid var(--line);border-radius:16px}
+    h1{margin:0;font-size:18px}
+    .updated{font-size:13px;color:var(--muted)}
+    .controls{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 14px}
+    input[type=text]{background:#0b1324;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:200px}
+    button{background:#1b2745;color:var(--text);border:1px solid #263352;border-radius:12px;padding:10px 14px;font-weight:600;cursor:pointer}
+    .legend{display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:6px}
+    .chipc{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:16px}
+    .card{background:#0f172a;border:1px solid var(--line);border-radius:18px;padding:16px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .leftRow{display:flex;align-items:center;gap:10px}
+    .title{font-size:18px;font-weight:800}
+    .chips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .pill{padding:6px 10px;border-radius:10px;font-size:12px;font-weight:800;border:1px solid #2a3a5a}
+    .pill.ok{background:rgba(22,163,74,.15);border-color:rgba(22,163,74,.4);color:#b7f7c7}
+    .pill.attn{background:rgba(250,204,21,.15);border-color:rgba(250,204,21,.4);color:#fef9c3}
+    .pill.alert{background:rgba(251,146,60,.15);border-color:rgba(251,146,60,.4);color:#ffedd5}
+    .pill.crit{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:#fecaca}
+    .bodyRow{display:grid;grid-template-columns:220px 1fr 120px;gap:14px;align-items:center;margin-top:14px}
+    .gauge{position:relative;width:200px;height:200px}
+    .ring{position:relative;width:200px;height:200px;border-radius:50%}
+    .ring::before{content:"";position:absolute;inset:0;border-radius:50%;background:var(--gradient);z-index:0}
+    .ring::after{content:"";position:absolute;inset:28px;border-radius:50%;background:#0f172a;border:1px solid var(--line);z-index:1}
+    .ringVal{position:absolute;inset:0;display:grid;place-items:center;font-size:38px;font-weight:800;z-index:2;color:var(--valColor)}
+    .needle{position:absolute;left:50%;top:50%;width:2px;height:74px;background:#cbd5e1;transform-origin:bottom center;transform:translate(-50%,-100%) rotate(var(--deg));z-index:2;border-radius:2px}
+    .tick{position:absolute;left:50%;top:50%;width:4px;height:14px;background:#334155;transform-origin:bottom center;border-radius:2px;opacity:.6}
+    .kpis{display:grid;grid-template-columns:1fr;gap:12px}
+    .kpi{background:#111c34;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+    .kpi dt{font-size:12px;color:var(--muted)}
+    .kpi dd{margin:4px 0 0 0;font-size:18px;font-weight:800}
+    .subs{display:flex;gap:12px;flex-wrap:wrap}
+    .risk{display:grid;justify-items:center;gap:6px}
+    .riskBar{width:24px;height:120px;border-radius:14px;background:#0b1324;border:1px solid var(--line);position:relative;overflow:hidden}
+    .riskFill{position:absolute;bottom:0;left:0;right:0;height:0;background:var(--riskColor)}
+    .riskLabel{font-size:14px;font-weight:800}
+    footer{margin-top:18px;color:var(--muted);font-size:12px;text-align:center}
   </style>
 </head>
 <body>
@@ -55,147 +61,96 @@
       <button id="addBtn">Add</button>
       <button id="refreshBtn">Refresh</button>
       <button id="clearBtn">Clear list</button>
-      <button id="leaderBtn" onclick="location.href='leaderboard.html'">Leaderboard</button>
-      <button id="archiveBtn" onclick="location.href='archive.html'">Archive</button>
+      <button onclick="location.href='leaderboard.html'">Leaderboard</button>
+      <button onclick="location.href='archive.html'">Archive</button>
     </div>
 
     <div class="legend">
-      <span class="chipc" style="background:var(--r)"></span> 0 to 2
-      <span class="chipc" style="background:var(--o)"></span> 3 to 4
-      <span class="chipc" style="background:var(--y)"></span> 5 to 6
-      <span class="chipc" style="background:var(--ok)"></span> 7 to 8
-      <span class="chipc" style="background:var(--w)"></span> 9 plus
+      <span class="chipc" style="background:var(--ok)"></span> good
+      <span class="chipc" style="background:var(--y)"></span> caution
+      <span class="chipc" style="background:var(--o)"></span> alert
+      <span class="chipc" style="background:var(--r)"></span> critical
     </div>
 
     <div class="grid" id="grid"></div>
-    <footer>Issues ring shows daily total with thresholds, Shift submittals use plant day 05:00 to 05:00 local.</footer>
+    <footer>Gauge shows minutes since last check. Risk bar shows daily issues by thresholds. Header chips show on-time and completion percent for the current plant day, 05:00 to 05:00 local.</footer>
   </div>
 
   <script>
-    const API_SUM="https://plantopsareacheck.netlify.app/.netlify/functions/summary";
-    const API_AREAS="https://plantopsareacheck.netlify.app/.netlify/functions/areas";
+    const API_SUM="/.netlify/functions/summary";
+    const API_AREAS="/.netlify/functions/areas";
     const STORE="plantops-areas";
     const DEFAULTS=["KILL"];
 
-    function uniq(a){ return Array.from(new Set(a)); }
-    function loadAreas(){ try{const s=localStorage.getItem(STORE); const arr=s?JSON.parse(s):DEFAULTS; return uniq(arr.map(v=>String(v||"").trim().toUpperCase()).filter(Boolean));}catch{return[...DEFAULTS];} }
-    function saveAreas(a){ localStorage.setItem(STORE, JSON.stringify(uniq(a))); }
-    function fmt(iso){ if(!iso)return"n/a"; const d=new Date(iso); const p=n=>String(n).padStart(2,"0"); return d.getUTCFullYear()+"-"+p(d.getUTCMonth()+1)+"-"+p(d.getUTCDate())+" "+p(d.getUTCHours())+":"+p(d.getUTCMinutes())+":"+p(d.getUTCSeconds())+" UTC"; }
+    function uniq(a){return Array.from(new Set(a))}
+    function loadAreas(){try{const s=localStorage.getItem(STORE);const arr=s?JSON.parse(s):DEFAULTS;return uniq(arr.map(v=>String(v||"").trim().toUpperCase()).filter(Boolean))}catch{return[...DEFAULTS]}}
+    function saveAreas(a){localStorage.setItem(STORE,JSON.stringify(uniq(a)))}
+    function fmt(iso){if(!iso)return"n/a";const d=new Date(iso);const p=n=>String(n).padStart(2,"0");return d.getUTCFullYear()+"-"+p(d.getUTCMonth()+1)+"-"+p(d.getUTCDate())+" "+p(d.getUTCHours())+":"+p(d.getUTCMinutes())+":"+p(d.getUTCSeconds())+" UTC"}
 
-    function badgeFromStatus(s){
-      const v=String(s||"").toUpperCase();
-      if(v==="OK") return '<span class="badge ok">OK</span>';
-      if(v==="ATTENTION") return '<span class="badge attn">Attention</span>';
-      if(v==="ALERT") return '<span class="badge alert">Alert</span>';
-      return '<span class="badge crit">Critical</span>';
-    }
+    function statusPill(s){const v=String(s||"").toUpperCase();if(v==="OK")return'<span class="pill ok">OK</span>';if(v==="ATTENTION")return'<span class="pill attn">Attention</span>';if(v==="ALERT")return'<span class="pill alert">Alert</span>';return'<span class="pill crit">Critical</span>'}
+    function pctPill(label,pct){const n=Math.max(0,Math.min(100,Number(pct)||0));let cls="alert";if(n>=90)cls="ok";else if(n>=70)cls="attn";return`<span class="pill ${cls}">${label} ${n}%</span>`}
 
-    function shiftColor(n){
-      if(n>=9) return "var(--w)";
-      if(n>=7) return "var(--ok)";
-      if(n>=5) return "var(--y)";
-      if(n>=3) return "var(--o)";
-      return "var(--r)";
-    }
+    function minuteColor(m){if(m<=60)return"var(--ok)";if(m<=90)return"var(--y)";return"var(--r)"}
+    function gaugeGradient(mins){const m=Math.max(0,Math.min(120,Number(mins)||0));const deg=(m/120)*360;const gEnd=Math.min(deg,(60/120)*360);const yEnd=Math.min(deg,(90/120)*360);const parts=[];if(gEnd>0)parts.push(`var(--ok) ${Math.round(gEnd)}deg`);if(yEnd>gEnd)parts.push(`var(--y) ${Math.round(yEnd)}deg`);if(deg>yEnd)parts.push(`var(--r) ${Math.round(deg)}deg`);parts.push("rgba(255,255,255,0.06) 0");return`conic-gradient(${parts.join(",")})`}
+    function ticksHTML(){const t=[];for(let i=0;i<12;i++){const ang=-90+i*30;t.push(`<span class="tick" style="transform:translate(-50%,-100%) rotate(${ang}deg)"></span>`)}return t.join("")}
+    function gaugeHTML(mins){const m=Math.max(0,Number(mins)||0);const valColor=minuteColor(m);const gradient=gaugeGradient(m);const deg=(-90+Math.min(120,m)*1.5)+"deg";return`<div class="gauge" style="--valColor:${valColor}"><div class="ring" style="--gradient:${gradient}"></div><div class="needle" style="--deg:${deg}"></div>${ticksHTML()}<div class="ringVal">${m}</div></div>`}
 
-    function issuesTextColor(issues){
-      const i=Math.max(0,Number(issues)||0);
-      if(i===0) return "var(--ok)";
-      if(i<=2) return "var(--y)";
-      if(i<=4) return "var(--o)";
-      return "var(--r)";
-    }
+    function riskColor(i){if(i>=5)return"var(--r)";if(i>=3)return"var(--o)";if(i>=1)return"var(--y)";return"var(--ok)"}
+    function riskLabel(i){if(i>=5)return"Critical";if(i>=3)return"Alert";if(i>=1)return"Attention";return"Good"}
+    function riskFillPct(i){const n=Math.max(0,Number(i)||0);return Math.min(100,Math.round((Math.min(n,10)/10)*100))}
 
-    function ringGradientIssues(issues){
-      const i=Math.max(0,Number(issues)||0);
-      if(i===0) return `conic-gradient(var(--ok) 360deg, transparent 0)`;
-      const cap=Math.min(i,15);
-      const deg=n=>Math.round((n/15)*360);
-      const parts=[];
-      const yEnd=deg(Math.min(cap,6));
-      const oEnd=deg(Math.min(cap,10));
-      const rEnd=deg(cap);
-      if(yEnd>0) parts.push(`var(--y) ${yEnd}deg`);
-      if(oEnd>yEnd) parts.push(`var(--o) ${oEnd}deg`);
-      if(rEnd>oEnd) parts.push(`var(--r) ${rEnd}deg`);
-      parts.push(`rgba(255,255,255,0.06) 0`);
-      return `conic-gradient(${parts.join(",")})`;
-    }
-
-    function issuesRing(issues){
-      const n=Math.max(0,Number(issues)||0);
-      const gradient=ringGradientIssues(n);
-      const color=issuesTextColor(n);
-      return `<div class="ring" style="--gradient:${gradient}"><div class="ringVal" style="color:${color}">${n}</div></div>`;
-    }
-
-    function submittalsList(sc){
-      const f = Number(sc?.first||0);
-      const s = Number(sc?.second||0);
-      const t = Number(sc?.third||0);
-      const line = (label,val) => `<li><span>${label}</span><span style="color:${shiftColor(val)}">${val}</span></li>`;
-      return `<ul class="lines">${line("1st shift",f)}${line("2nd shift",s)}${line("3rd shift",t)}</ul>`;
-    }
+    function shiftColor(n){if(n>=9)return"var(--w)";if(n>=7)return"var(--ok)";if(n>=5)return"var(--y)";if(n>=3)return"var(--o)";return"var(--r)"}
 
     function card(area,d){
-      const badge=badgeFromStatus(d.status);
-      const issues=Math.max(0, Number(d.issuesToday)||0);
-      return `
-        <div class="card">
-          <div class="row">
-            <span class="chip">${area}</span>
-            ${badge}
+      const minutes=Math.max(0,Number(d.minutesSince)||0);
+      const f=Number(d.shiftCountsToday?.first||0);
+      const s=Number(d.shiftCountsToday?.second||0);
+      const t=Number(d.shiftCountsToday?.third||0);
+      const submissions=(Number(d.submissionsToday??0))||(f+s+t);
+      const rColor=riskColor(d.issuesToday);
+      const rPct=riskFillPct(d.issuesToday);
+      const chips=[pctPill("On-time",d.onTimePct),pctPill("Completions",d.completionPct),statusPill(d.status)].join("");
+      return `<div class="card">
+        <div class="row"><div class="leftRow"><span class="title">${area}</span></div><div class="chips">${chips}</div></div>
+        <div class="bodyRow">
+          <div>${gaugeHTML(minutes)}</div>
+          <div class="kpis">
+            <div class="kpi"><dt>Minutes since last check</dt><dd>${minutes} minutes</dd></div>
+            <div class="kpi"><dt>Today submissions</dt><dd>${submissions}</dd></div>
+            <div class="kpi"><dt>Shift submittals today</dt><dd class="subs">
+              <span style="color:${shiftColor(f)}">1st: ${f}</span>
+              <span style="color:${shiftColor(s)}">2nd: ${s}</span>
+              <span style="color:${shiftColor(t)}">3rd: ${t}</span>
+            </dd></div>
+            <div class="kpi"><dt>Last time</dt><dd>${fmt(d.lastTime)}</dd></div>
           </div>
-          <div class="ringBox">
-            <div class="ringWrap">
-              ${issuesRing(issues)}
-              <div class="ringLabel">ISSUES</div>
-            </div>
-            <div class="kpis">
-              <div class="kpi"><dt>Last time</dt><dd>${fmt(d.lastTime)}</dd></div>
-              <div class="kpi"><dt>Shift submittals</dt><dd>${submittalsList(d.shiftCountsToday)}</dd></div>
-            </div>
+          <div class="risk">
+            <div class="riskBar"><div class="riskFill" style="height:${rPct}%;background:${rColor}"></div></div>
+            <div class="riskLabel" style="color:${rColor}">${riskLabel(d.issuesToday)}</div>
           </div>
         </div>
-      `;
+      </div>`;
     }
 
-    async function fetchSummary(a){ const res=await fetch(API_SUM+"?area="+encodeURIComponent(a),{cache:"no-store"}); if(!res.ok)throw new Error("HTTP "+res.status); return res.json(); }
-    async function fetchAreas(){ const res=await fetch(API_AREAS,{cache:"no-store"}); if(!res.ok)throw new Error("HTTP "+res.status); const j=await res.json(); return Array.isArray(j.areas)?j.areas:[]; }
+    async function fetchSummary(a){const r=await fetch(API_SUM+"?area="+encodeURIComponent(a),{cache:"no-store"});if(!r.ok)throw new Error("HTTP "+r.status);return r.json()}
+    async function fetchAreas(){const r=await fetch(API_AREAS,{cache:"no-store"});if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json();return Array.isArray(j.areas)?j.areas:[]}
 
     async function render(){
-      const container=document.getElementById("grid");
+      const c=document.getElementById("grid");
       const areas=loadAreas();
       const results=await Promise.allSettled(areas.map(fetchSummary));
-      container.innerHTML=results.map((r,i)=>{ const a=areas[i]; if(r.status==="fulfilled") return card(a,r.value);
-        return `<div class="card"><div class="row"><span class="chip">${a}</span><span class="badge crit">Error</span></div></div>`; }).join("");
-      document.getElementById("updated").textContent="Updated: "+new Date().toISOString().replace("T"," ").replace("Z"," UTC");
+      c.innerHTML=results.map((r,i)=>{const a=areas[i];if(r.status==="fulfilled")return card(a,r.value);return `<div class="card"><div class="row"><span class="title">${a}</span><span class="pill crit">Error</span></div></div>`}).join("");
+      document.getElementById("updated").textContent="Updated: "+new Date().toISOString().replace("T"," ").replace("Z"," UTC")
     }
 
-    async function autoDiscover(){
-      try{
-        const discovered=await fetchAreas();
-        if(discovered.length){
-          saveAreas(discovered);
-          await render();
-        }
-      }catch{}
-    }
-
-    function addArea(){
-      const input=document.getElementById("addArea");
-      const val=input.value.trim().toUpperCase();
-      if(!val) return;
-      const areas=loadAreas();
-      if(!areas.includes(val)){ areas.push(val); saveAreas(areas); render(); }
-      input.value=""; input.focus();
-    }
+    async function autoDiscover(){try{const discovered=await fetchAreas();if(discovered.length){saveAreas(discovered);await render()}}catch{}}
+    function addArea(){const input=document.getElementById("addArea");const val=input.value.trim().toUpperCase();if(!val)return;const areas=loadAreas();if(!areas.includes(val)){areas.push(val);saveAreas(areas);render()}input.value="";input.focus()}
 
     document.getElementById("autoBtn").addEventListener("click",()=>autoDiscover());
     document.getElementById("addBtn").addEventListener("click",addArea);
-    document.getElementById("addArea").addEventListener("keydown",e=>{ if(e.key==="Enter") addArea(); });
+    document.getElementById("addArea").addEventListener("keydown",e=>{if(e.key==="Enter")addArea()});
     document.getElementById("refreshBtn").addEventListener("click",()=>render());
-    document.getElementById("clearBtn").addEventListener("click",()=>{ saveAreas(["KILL"]); render(); });
+    document.getElementById("clearBtn").addEventListener("click",()=>{saveAreas(["KILL"]);render()});
 
     autoDiscover().then(render);
     setInterval(render,30000);
