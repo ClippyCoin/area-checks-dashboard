@@ -29,13 +29,12 @@
     .pill.alert{background:rgba(251,146,60,.15);border-color:rgba(251,146,60,.4);color:#ffedd5}
     .pill.crit{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:#fecaca}
     .bodyRow{display:grid;grid-template-columns:220px 1fr 120px;gap:14px;align-items:center;margin-top:14px}
-    .gauge{position:relative;width:200px;height:200px}
+    .ringWrap{display:grid;justify-items:center}
+    .ringLabel{font-size:12px;color:var(--muted);margin-top:6px}
     .ring{position:relative;width:200px;height:200px;border-radius:50%}
     .ring::before{content:"";position:absolute;inset:0;border-radius:50%;background:var(--gradient);z-index:0}
     .ring::after{content:"";position:absolute;inset:28px;border-radius:50%;background:#0f172a;border:1px solid var(--line);z-index:1}
     .ringVal{position:absolute;inset:0;display:grid;place-items:center;font-size:38px;font-weight:800;z-index:2;color:var(--valColor)}
-    .needle{position:absolute;left:50%;top:50%;width:2px;height:74px;background:#cbd5e1;transform-origin:bottom center;transform:translate(-50%,-100%) rotate(var(--deg));z-index:2;border-radius:2px}
-    .tick{position:absolute;left:50%;top:50%;width:4px;height:14px;background:#334155;transform-origin:bottom center;border-radius:2px;opacity:.6}
     .kpis{display:grid;grid-template-columns:1fr;gap:12px}
     .kpi{background:#111c34;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
     .kpi dt{font-size:12px;color:var(--muted)}
@@ -73,7 +72,7 @@
     </div>
 
     <div class="grid" id="grid"></div>
-    <footer>Gauge shows minutes since last check. Risk bar shows daily issues by thresholds. Header chips show on-time and completion percent for the current plant day, 05:00 to 05:00 local.</footer>
+    <footer>ISSUES ring shows daily total by thresholds. Minutes since last check appears as a KPI. Header chips show on-time and completion percent for the current plant day, 05:00 to 05:00 local.</footer>
   </div>
 
   <script>
@@ -90,16 +89,33 @@
     function statusPill(s){const v=String(s||"").toUpperCase();if(v==="OK")return'<span class="pill ok">OK</span>';if(v==="ATTENTION")return'<span class="pill attn">Attention</span>';if(v==="ALERT")return'<span class="pill alert">Alert</span>';return'<span class="pill crit">Critical</span>'}
     function pctPill(label,pct){const n=Math.max(0,Math.min(100,Number(pct)||0));let cls="alert";if(n>=90)cls="ok";else if(n>=70)cls="attn";return`<span class="pill ${cls}">${label} ${n}%</span>`}
 
-    function minuteColor(m){if(m<=60)return"var(--ok)";if(m<=90)return"var(--y)";return"var(--r)"}
-    function gaugeGradient(mins){const m=Math.max(0,Math.min(120,Number(mins)||0));const deg=(m/120)*360;const gEnd=Math.min(deg,(60/120)*360);const yEnd=Math.min(deg,(90/120)*360);const parts=[];if(gEnd>0)parts.push(`var(--ok) ${Math.round(gEnd)}deg`);if(yEnd>gEnd)parts.push(`var(--y) ${Math.round(yEnd)}deg`);if(deg>yEnd)parts.push(`var(--r) ${Math.round(deg)}deg`);parts.push("rgba(255,255,255,0.06) 0");return`conic-gradient(${parts.join(",")})`}
-    function ticksHTML(){const t=[];for(let i=0;i<12;i++){const ang=-90+i*30;t.push(`<span class="tick" style="transform:translate(-50%,-100%) rotate(${ang}deg)"></span>`)}return t.join("")}
-    function gaugeHTML(mins){const m=Math.max(0,Number(mins)||0);const valColor=minuteColor(m);const gradient=gaugeGradient(m);const deg=(-90+Math.min(120,m)*1.5)+"deg";return`<div class="gauge" style="--valColor:${valColor}"><div class="ring" style="--gradient:${gradient}"></div><div class="needle" style="--deg:${deg}"></div>${ticksHTML()}<div class="ringVal">${m}</div></div>`}
+    function issuesTextColor(i){const n=Math.max(0,Number(i)||0);if(n===0)return"var(--ok)";if(n<=2)return"var(--y)";if(n<=4)return"var(--o)";return"var(--r)"}
+    function ringGradientIssues(i){
+      const n=Math.max(0,Number(i)||0);
+      if(n===0)return"conic-gradient(var(--ok) 360deg, transparent 0)";
+      const cap=Math.min(n,15);
+      const deg=v=>Math.round((v/15)*360);
+      const yEnd=deg(Math.min(cap,6));
+      const oEnd=deg(Math.min(cap,10));
+      const rEnd=deg(cap);
+      const parts=[];
+      if(yEnd>0)parts.push(`var(--y) ${yEnd}deg`);
+      if(oEnd>yEnd)parts.push(`var(--o) ${oEnd}deg`);
+      if(rEnd>oEnd)parts.push(`var(--r) ${rEnd}deg`);
+      parts.push("rgba(255,255,255,0.06) 0");
+      return`conic-gradient(${parts.join(",")})`
+    }
 
     function riskColor(i){if(i>=5)return"var(--r)";if(i>=3)return"var(--o)";if(i>=1)return"var(--y)";return"var(--ok)"}
     function riskLabel(i){if(i>=5)return"Critical";if(i>=3)return"Alert";if(i>=1)return"Attention";return"Good"}
     function riskFillPct(i){const n=Math.max(0,Number(i)||0);return Math.min(100,Math.round((Math.min(n,10)/10)*100))}
-
     function shiftColor(n){if(n>=9)return"var(--w)";if(n>=7)return"var(--ok)";if(n>=5)return"var(--y)";if(n>=3)return"var(--o)";return"var(--r)"}
+
+    function issuesRing(i){
+      const gradient=ringGradientIssues(i);
+      const color=issuesTextColor(i);
+      return `<div class="ringWrap"><div class="ring" style="--gradient:${gradient}"><div class="ringVal" style="color:${color}">${Math.max(0,Number(i)||0)}</div></div><div class="ringLabel">ISSUES</div></div>`;
+    }
 
     function card(area,d){
       const minutes=Math.max(0,Number(d.minutesSince)||0);
@@ -113,7 +129,7 @@
       return `<div class="card">
         <div class="row"><div class="leftRow"><span class="title">${area}</span></div><div class="chips">${chips}</div></div>
         <div class="bodyRow">
-          <div>${gaugeHTML(minutes)}</div>
+          ${issuesRing(d.issuesToday)}
           <div class="kpis">
             <div class="kpi"><dt>Minutes since last check</dt><dd>${minutes} minutes</dd></div>
             <div class="kpi"><dt>Today submissions</dt><dd>${submissions}</dd></div>
