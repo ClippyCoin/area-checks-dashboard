@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Issues</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{--bg:#0b0f1a;--panel:#0f172a;--muted:#9aa4b2;--text:#e6f0ff;--line:#192235;--ok:#16a34a;--y:#facc15;--o:#fb923c;--r:#ef4444}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px 20px 28px}
+  header{display:flex;gap:10px;align-items:center;justify-content:space-between;background:#10182b;border:1px solid var(--line);border-radius:16px;padding:10px 12px}
+  h1{margin:0;font-size:18px}
+  .controls{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}
+  input,select,button{background:#0b1324;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th,td{border-bottom:1px solid #172038;padding:8px 10px;font-size:14px;vertical-align:top}
+  th{color:var(--muted);text-align:left}
+  .pill{padding:3px 8px;border-radius:999px;border:1px solid #2a3a5a;font-size:12px;font-weight:800}
+  .ok{background:rgba(22,163,74,.15);color:#b7f7c7}
+  .bad{background:rgba(239,68,68,.15);color:#fecaca}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Issues</h1>
+    <div>
+      <button onclick="location.href='index.html'">Dashboard</button>
+      <button onclick="location.href='leaderboard.html'">Leaderboard</button>
+      <button onclick="location.href='archive.html'">Archive</button>
+    </div>
+  </header>
+  <div class="controls">
+    <select id="areaSel">
+      <option value="KILL">KILL</option>
+      <option value="PICKING">PICKING</option>
+      <option value="SCALD">SCALD</option>
+      <option value="COOP">COOP</option>
+    </select>
+    <input id="limit" type="number" min="1" max="500" value="100">
+    <button id="loadBtn">Load</button>
+  </div>
+  <table id="tbl">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Responder</th>
+        <th>Issues</th>
+        <th>Failed</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+<script>
+async function load(){
+  const area=document.getElementById('areaSel').value;
+  const limit=document.getElementById('limit').value;
+  const r=await fetch(`/.netlify/functions/history?area=${encodeURIComponent(area)}&limit=${encodeURIComponent(limit)}`,{cache:'no-store'});
+  const j=await r.json();
+  const tb=document.querySelector('#tbl tbody');
+  tb.innerHTML = (j.items||[]).map(it=>{
+    const fails = Array.isArray(it.fails) ? it.fails.filter(x=>x).join(', ') : '';
+    const pill = it.issue_count>0 ? `<span class="pill bad">${it.issue_count}</span>` : `<span class="pill ok">0</span>`;
+    return `<tr>
+      <td>${it.timestamp||''}</td>
+      <td>${it.responder||''}</td>
+      <td>${pill}</td>
+      <td>${fails}</td>
+    </tr>`;
+  }).join('');
+}
+document.getElementById('loadBtn').addEventListener('click', load);
+load();
+</script>
+</body>
+</html>
