@@ -18,6 +18,7 @@ export default async (req, context) => {
     const parts = d => Object.fromEntries(fmt.formatToParts(d).map(p => [p.type, p.value]));
     const ymd = d => { const p = parts(d); return `${p.year}-${p.month}-${p.day}`; };
     const hm  = d => { const p = parts(d); return `${p.hour}:${p.minute}`; };
+    const hmToMin = s => { const [h,m] = String(s).split(":").map(n => parseInt(n, 10)); return (isNaN(h)||isNaN(m)) ? 0 : h*60+m; };
 
     const now = new Date();
     const todayY = ymd(now);
@@ -42,7 +43,7 @@ export default async (req, context) => {
       `data/${area.toLowerCase()}/${tomY}.jsonl`
     ];
 
-    let lines = [];
+    const lines = [];
     for (const p of paths) {
       const t = await read(p);
       if (t) lines.push(...t.split(/\r?\n/).filter(Boolean));
@@ -53,7 +54,6 @@ export default async (req, context) => {
       if (localY === plantNextY  && localHM <  "05:00") return true;
       return false;
     }
-
     function whichShift(localHM) {
       if (localHM >= "05:00" && localHM < "13:00") return "first";
       if (localHM >= "13:00" && localHM < "21:00") return "second";
@@ -61,57 +61,43 @@ export default async (req, context) => {
       return "none";
     }
 
-    let issuesToday = 0;
-    let latestISO = null;
-    let first = 0, second = 0, third = 0;
-
+    const rows = [];
     for (const line of lines) {
       try {
         const obj = JSON.parse(line);
         const ts  = new Date(obj.timestamp || obj.time || 0);
         if (isNaN(ts)) continue;
-
         const localY  = ymd(ts);
         const localHM = hm(ts);
-
         if (inPlantDay(localY, localHM)) {
-          const c = Number(obj.issue_count ?? 0);
-          if (!Number.isNaN(c)) issuesToday += c;
-
-          const s = whichShift(localHM);
-          if (s === "first")  first  += 1;
-          if (s === "second") second += 1;
-          if (s === "third")  third  += 1;
+          rows.push({ obj, tsISO: ts.toISOString(), localY, localHM });
         }
-
-        latestISO = ts.toISOString();
       } catch {}
     }
+    rows.sort((a, b) => a.tsISO.localeCompare(b.tsISO));
 
+    const submissionsToday = rows.length;
+    const issuesToday = rows.reduce((sum, r) => {
+      const c = Number(r.obj.issue_count ?? 0);
+      return sum + (Number.isNaN(c) ? 0 : c);
+    }, 0);
+
+    const latestISO = submissionsToday ? rows[rows.length - 1].tsISO : null;
     let minutesSince = null;
     if (latestISO) {
       const ms = Date.now() - new Date(latestISO).getTime();
       minutesSince = Math.max(0, Math.floor(ms / 60000));
     }
 
-    let status = "OK";
-    if (issuesToday >= 5) status = "Critical";
-    else if (issuesToday >= 3) status = "Alert";
-    else if (issuesToday >= 1) status = "Attention";
+    let first = 0, second = 0, third = 0;
+    for (const r of rows) {
+      const s = whichShift(r.localHM);
+      if (s === "first")  first  += 1;
+      if (s === "second") second += 1;
+      if (s === "third")  third  += 1;
+    }
 
-    const body = {
-      area,
-      lastTime: latestISO,
-      minutesSince,
-      issuesToday,
-      latestCount: 0,
-      status,
-      shiftCountsToday: { first, second, third },
-      meta: { tz, plantStart: `${plantStartY}T05:00:00` }
-    };
+    const WIN_MIN = 60;
+    const TOL_MIN = 10;
 
-    return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" } });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 200, headers: { "Content-Type": "application/json" } });
-  }
-};
+    const no
