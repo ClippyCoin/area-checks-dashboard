@@ -28,23 +28,19 @@
     .pill.attn{background:rgba(250,204,21,.15);border-color:rgba(250,204,21,.4);color:#fef9c3}
     .pill.alert{background:rgba(251,146,60,.15);border-color:rgba(251,146,60,.4);color:#ffedd5}
     .pill.crit{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:#fecaca}
-
     .bodyRow{display:grid;grid-template-columns:220px 1fr 120px;gap:14px;align-items:center;margin-top:14px}
-
     .ringWrap{display:grid;justify-items:center}
     .ringLabel{font-size:12px;color:var(--muted);margin-top:6px}
     .ring{position:relative;width:200px;height:200px;border-radius:50%}
     .ring::before{content:"";position:absolute;inset:0;border-radius:50%;background:var(--gradient);z-index:0}
     .ring::after{content:"";position:absolute;inset:28px;border-radius:50%;background:#0f172a;border:1px solid var(--line);z-index:1}
     .ringVal{position:absolute;inset:0;display:grid;place-items:center;font-size:38px;font-weight:800;z-index:2;color:var(--valColor)}
-
     .kpis{display:grid;grid-template-columns:1fr;gap:12px}
     .kpi{background:#111c34;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
     .kpi dt{font-size:12px;color:var(--muted)}
     .kpi dd{margin:4px 0 0 0;font-size:18px;font-weight:800}
     .subsV{margin:0;padding:0;list-style:none;display:grid;row-gap:6px}
     .subsV li{display:flex;justify-content:space-between}
-
     .risk{display:grid;justify-items:center;gap:6px}
     .riskBar{width:24px;height:120px;border-radius:14px;background:#0b1324;border:1px solid var(--line);position:relative;overflow:hidden}
     .riskFill{position:absolute;bottom:0;left:0;right:0;height:0;background:var(--riskColor)}
@@ -67,6 +63,7 @@
       <button id="clearBtn">Clear list</button>
       <button onclick="location.href='leaderboard.html'">Leaderboard</button>
       <button onclick="location.href='archive.html'">Archive</button>
+      <button onclick="location.href='issues.html'">Issues</button>
     </div>
 
     <div class="legend">
