@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>EOSR Archive</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{background:#0b0f1a;color:#e6f0ff;font-family:Inter,system-ui,sans-serif;margin:0;padding:20px}
+    h1{margin:0 0 20px}
+    select{padding:8px;background:#111c34;color:#fff;border:1px solid #263352;border-radius:8px}
+    .entry{border:1px solid #263352;border-radius:12px;padding:12px;margin:12px 0;background:#0f172a}
+    .chip{display:inline-block;padding:2px 8px;border-radius:8px;font-size:12px;font-weight:700}
+    .chip.normal{background:#1b2745}
+    .chip.attention{background:#facc15;color:#000}
+    .chip.critical{background:#ef4444}
+    .chip.USDA{background:#16a34a}
+  </style>
+</head>
+<body>
+  <h1>EOSR Archive</h1>
+  <label>Select week:
+    <select id="weekSel"></select>
+  </label>
+  <div id="entries" style="margin-top:16px">Loading…</div>
+
+<script>
+async function loadWeeks(){
+  const r=await fetch("/.netlify/functions/eosr_list?weeks=all",{cache:"no-store"});
+  const j=await r.json();
+  const sel=document.getElementById("weekSel");
+  sel.innerHTML=(j.weeks||[]).map(w=>`<option value="${w}">${w}</option>`).join("");
+  sel.addEventListener("change",()=>loadWeek(sel.value));
+  if(j.weeks&&j.weeks.length){loadWeek(j.weeks[0]);}else{document.getElementById("entries").textContent="No archive yet.";}
+}
+
+async function loadWeek(week){
+  const r=await fetch("/.netlify/functions/eosr_list?week="+encodeURIComponent(week),{cache:"no-store"});
+  const j=await r.json();
+  const c=document.getElementById("entries");
+  c.innerHTML=(j.items||[]).map(e=>{
+    return `<div class="entry">
+      <div><b>${e.local_day}</b> – ${e.shift} shift – <span class="chip ${e.priority}">${e.priority}</span></div>
+      <div><i>${e.submitted_by||""}</i></div>
+      <div>${String(e.notes||"").replace(/\n/g,"<br>")}</div>
+    </div>`;
+  }).join("") || "No entries for this week.";
+}
+
+loadWeeks();
+</script>
+</body>
+</html>
