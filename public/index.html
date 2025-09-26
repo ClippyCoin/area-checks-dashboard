@@ -46,6 +46,8 @@
     .riskFill{position:absolute;bottom:0;left:0;right:0;height:0;background:var(--riskColor)}
     .riskLabel{font-size:14px;font-weight:800}
     footer{margin-top:18px;color:var(--muted);font-size:12px;text-align:center}
+    .btnLink{background:#0b1324;border:1px solid #263352;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;color:#fff}
+    .btnLink.outline{background:#111826;border:1px solid #3a4b6a}
   </style>
 </head>
 <body>
@@ -82,6 +84,20 @@
     const API_AREAS="/.netlify/functions/areas";
     const STORE="plantops-areas";
     const DEFAULTS=["KILL"];
+
+    const areaExcelLink = {
+      "PICKING": "https://waynefarms-my.sharepoint.com/:x:/p/dennis_barr/ETedCnjkWNlNneqVATRRlFcB8OMrM2I51p6Gt-r7ZkCowQ?email=Mickey.Cox%40WayneSanderson.com&e=4b43pU",
+      "COOP":    "https://waynefarms-my.sharepoint.com/:x:/p/dennis_barr/EeXKAhkkfv5Amp8dDE6mZIUB0EL9o0bTQzlbVQQkdolPRg?email=Mickey.Cox%40WayneSanderson.com&e=dKlT2N",
+      "SCALD":   "https://waynefarms-my.sharepoint.com/:x:/p/dennis_barr/EVm_b9dNLr5AraDYJFk8u38BloHekZ7iZZdSLwWXB76hnw?email=Mickey.Cox%40WayneSanderson.com&e=S9Pkhh",
+      "KILL":    "https://waynefarms-my.sharepoint.com/:x:/p/dennis_barr/EatqDhJEXGRGsj4Vp5ojd6gBGWJnEKpXvZB0MODCW91yMg?email=Mickey.Cox%40WayneSanderson.com&e=xmbZMV"
+    };
+
+    const areaSummaryLink = {
+      "PICKING": "https://forms.office.com/Pages/AnalysisPage.aspx?AnalyzerToken=oRRtSSCaPLoYsXPtPkYnttmjBPrVqLhn&id=3JG89IfD0E6e175TItrr8LO9tidJOFRAtBCVSjfTIJdUQzgwRVo0R0U4SEIwTzcyTFZCMFZLMVJMMy4u",
+      "COOP":    "https://forms.office.com/Pages/AnalysisPage.aspx?AnalyzerToken=JdnPgtc0TV4hcKiPB5bmKzFcvrJZZZkL&id=3JG89IfD0E6e175TItrr8LO9tidJOFRAtBCVSjfTIJdUNkYzSVNLRjc1SFQxUUNDWTQ5MEdVM1JZUi4u",
+      "SCALD":   "https://forms.office.com/Pages/AnalysisPage.aspx?AnalyzerToken=rK2kAcucVbPCMKSODJt5KGV6bCWHoL8Z&id=3JG89IfD0E6e175TItrr8LO9tidJOFRAtBCVSjfTIJdUMTZUVDExOVk3SFNOSzZVMk9NRVhJVUoyOC4u",
+      "KILL":    "https://forms.office.com/Pages/AnalysisPage.aspx?AnalyzerToken=G7m5c3T3FGDYURdfDQ8rO93KxjNb5H2K&id=3JG89IfD0E6e175TItrr8LO9tidJOFRAtBCVSjfTIJdUQlkwM0lFVDg0VVNBWUJRQjkwWVpKRUhCRi4u"
+    };
 
     function uniq(a){return Array.from(new Set(a))}
     function loadAreas(){try{const s=localStorage.getItem(STORE);const arr=s?JSON.parse(s):DEFAULTS;return uniq(arr.map(v=>String(v||"").trim().toUpperCase()).filter(Boolean))}catch{return[...DEFAULTS]}}
@@ -135,8 +151,17 @@
       const rColor=riskColor(d.issuesToday);
       const rPct=riskFillTier(d.issuesToday);
       const chips=[pctPill("On-time",d.onTimePct),pctPill("Completions",d.completionPct),statusPill(d.status)].join("");
+      const hasExcel = !!areaExcelLink[area];
+      const hasSummary = !!areaSummaryLink[area];
+      const buttons = [
+        hasExcel ? `<button class="btnLink" onclick="openExcel('${area}')">Open Excel</button>` : "",
+        hasSummary ? `<button class="btnLink outline" onclick="openSummary('${area}')">View Summary</button>` : ""
+      ].join("");
       return `<div class="card">
-        <div class="row"><div class="leftRow"><span class="title">${area}</span></div><div class="chips">${chips}</div></div>
+        <div class="row">
+          <div class="leftRow"><span class="title">${area}</span></div>
+          <div class="chips">${chips} ${buttons}</div>
+        </div>
         <div class="bodyRow">
           ${issuesRing(d.issuesToday)}
           <div class="kpis">
@@ -166,6 +191,17 @@
 
     async function autoDiscover(){try{const discovered=await fetchAreas();if(discovered.length){saveAreas(discovered);await render()}}catch{}}
     function addArea(){const input=document.getElementById("addArea");const val=input.value.trim().toUpperCase();if(!val)return;const areas=loadAreas();if(!areas.includes(val)){areas.push(val);saveAreas(areas);render()}input.value="";input.focus()}
+
+    function openExcel(area){
+      const url = areaExcelLink[String(area||"").toUpperCase()];
+      if(!url){ alert("No Excel link set for "+area); return; }
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+    function openSummary(area){
+      const url = areaSummaryLink[String(area||"").toUpperCase()];
+      if(!url){ alert("No Summary link set for "+area); return; }
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
 
     document.getElementById("autoBtn").addEventListener("click",()=>autoDiscover());
     document.getElementById("addBtn").addEventListener("click",addArea);
