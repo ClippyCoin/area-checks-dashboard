@@ -48,6 +48,7 @@
     footer{margin-top:18px;color:var(--muted);font-size:12px;text-align:center}
     .btnLink{background:#0b1324;border:1px solid #263352;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;color:#fff}
     .btnLink.outline{background:#111826;border:1px solid #3a4b6a}
+    .btnRow{grid-column:1/3;display:flex;justify-content:space-between;gap:12px;margin-top:10px}
   </style>
 </head>
 <body>
@@ -142,6 +143,12 @@
       </ul>`;
     }
 
+    function resolveAreaKey(area){
+      const a=String(area||"").toUpperCase();
+      if(a.startsWith("PICK")) return "PICKING";
+      return a;
+    }
+
     function card(area,d){
       const minutes=Math.max(0,Number(d.minutesSince)||0);
       const f=Number(d.shiftCountsToday?.first||0);
@@ -151,16 +158,20 @@
       const rColor=riskColor(d.issuesToday);
       const rPct=riskFillTier(d.issuesToday);
       const chips=[pctPill("On-time",d.onTimePct),pctPill("Completions",d.completionPct),statusPill(d.status)].join("");
-      const hasExcel = !!areaExcelLink[area];
-      const hasSummary = !!areaSummaryLink[area];
-      const buttons = [
-        hasExcel ? `<button class="btnLink" onclick="openExcel('${area}')">Open Excel</button>` : "",
-        hasSummary ? `<button class="btnLink outline" onclick="openSummary('${area}')">View Summary</button>` : ""
-      ].join("");
+      const key=resolveAreaKey(area);
+      const hasExcel = !!areaExcelLink[key];
+      const hasSummary = !!areaSummaryLink[key];
+      const btnRow = (hasExcel||hasSummary)
+        ? `<div class="btnRow">
+             ${hasExcel?`<button class="btnLink" onclick="openExcel('${key}')">Open Excel</button>`:""}
+             ${hasSummary?`<button class="btnLink outline" onclick="openSummary('${key}')">View Summary</button>`:""}
+           </div>`
+        : "";
+
       return `<div class="card">
         <div class="row">
           <div class="leftRow"><span class="title">${area}</span></div>
-          <div class="chips">${chips} ${buttons}</div>
+          <div class="chips">${chips}</div>
         </div>
         <div class="bodyRow">
           ${issuesRing(d.issuesToday)}
@@ -174,6 +185,7 @@
             <div class="riskBar"><div class="riskFill" style="height:${rPct}%;background:${rColor}"></div></div>
             <div class="riskLabel" style="color:${rColor}">${riskLabel(d.issuesToday)}</div>
           </div>
+          ${btnRow}
         </div>
       </div>`;
     }
