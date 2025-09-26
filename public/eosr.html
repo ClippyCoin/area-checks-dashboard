@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>End of Shift Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{background:#0b0f1a;color:#e6f0ff;font-family:Inter,system-ui,sans-serif;margin:0;padding:20px}
+    h1{margin:0 0 20px}
+    form{display:grid;gap:12px;max-width:640px}
+    input,select,textarea,button{padding:10px;border-radius:8px;border:1px solid #263352;background:#111c34;color:#fff}
+    textarea{min-height:150px}
+    button{cursor:pointer;font-weight:600;background:#1b2745}
+    .entry{border:1px solid #263352;border-radius:12px;padding:12px;margin:12px 0;background:#0f172a}
+    .chip{display:inline-block;padding:2px 8px;border-radius:8px;font-size:12px;font-weight:700}
+    .chip.normal{background:#1b2745}
+    .chip.attention{background:#facc15;color:#000}
+    .chip.critical{background:#ef4444}
+    .chip.USDA{background:#16a34a}
+  </style>
+</head>
+<body>
+  <h1>End of Shift Report</h1>
+  <form id="eosrForm">
+    <label>Shift
+      <select name="shift" required>
+        <option value="first">First</option>
+        <option value="second">Second</option>
+        <option value="third">Third</option>
+      </select>
+    </label>
+    <label>Submitted by
+      <input type="text" name="submitted_by">
+    </label>
+    <label>Priority
+      <select name="priority">
+        <option value="normal">Normal</option>
+        <option value="attention">Attention</option>
+        <option value="critical">Critical</option>
+        <option value="USDA">USDA</option>
+      </select>
+    </label>
+    <label>Affected areas
+      <input type="text" value="USP Complex" readonly>
+    </label>
+    <label>Report
+      <textarea name="notes" required></textarea>
+    </label>
+    <button type="submit">Submit</button>
+  </form>
+
+  <h2 style="margin-top:24px">This Week’s Reports</h2>
+  <div id="entries">Loading…</div>
+
+<script>
+async function loadThisWeek(){
+  const r=await fetch("/.netlify/functions/eosr_list?week=current",{cache:"no-store"});
+  const j=await r.json();
+  const c=document.getElementById("entries");
+  c.innerHTML=(j.items||[]).map(e=>{
+    return `<div class="entry">
+      <div><b>${e.local_day}</b> – ${e.shift} shift – <span class="chip ${e.priority}">${e.priority}</span></div>
+      <div><i>${e.submitted_by||""}</i></div>
+      <div>${String(e.notes||"").replace(/\n/g,"<br>")}</div>
+    </div>`;
+  }).join("") || "No reports yet.";
+}
+
+document.getElementById("eosrForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  const fd=new FormData(ev.target);
+  const data=Object.fromEntries(fd.entries());
+  const r=await fetch("/.netlify/functions/eosr_submit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
+  if(r.ok){ev.target.reset();loadThisWeek();}else{alert("Error submitting EOSR");}
+});
+
+loadThisWeek();
+</script>
+</body>
+</html>
