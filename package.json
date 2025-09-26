@@ -1,0 +1,13 @@
+{
+  "name": "area-checks-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo 'No build step configured' && exit 0",
+    "start": "netlify dev"
+  },
+  "dependencies": {
+    "luxon": "^3.4.4",
+    "nodemailer": "^6.9.11"
+  }
+}
