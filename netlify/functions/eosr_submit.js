@@ -93,8 +93,9 @@ export default async (req) => {
     }
 
     const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
-    const FROM_EMAIL = process.env.FROM_EMAIL || "no-reply@example.com";
-    const EOSR_TO = process.env.EOSR_TO || "USPMAINTENANCE@waynesanderson.com";
+    const FROM_EMAIL = process.env.FROM_EMAIL || "djbarr1980@gmail.com";
+    const EOSR_TO = process.env.EOSR_TO || "dennis.barr@waynesanderson.com";
+    const REPLY_TO = process.env.REPLY_TO || "dennis.barr@waynesanderson.com";
 
     if (SENDGRID_API_KEY) {
       const subject = `[EOSR][${priority.toUpperCase()}] ${shift} shift — ${now.toFormat("ccc LLL dd yyyy")}`;
@@ -122,6 +123,7 @@ ${entry.notes}
       const sgBody = {
         personalizations: [{ to: EOSR_TO.split(",").map(e => ({ email: e.trim() })).filter(x => x.email) }],
         from: { email: FROM_EMAIL },
+        reply_to: { email: REPLY_TO },
         subject,
         content: [
           { type: "text/plain", value: plain },
