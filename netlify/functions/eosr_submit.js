@@ -51,10 +51,10 @@ export default async (req) => {
     const path = `data-eosr/${weekId}.jsonl`;
 
     async function getFileSha() {
-      const r = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=${GITHUB_BRANCH}`, {
-        headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, "User-Agent": "netlify-fn" },
-        cache: "no-store",
-      });
+      const r = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=${GITHUB_BRANCH}`,
+        { headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, "User-Agent": "netlify-fn" }, cache: "no-store" }
+      );
       if (r.status === 404) return null;
       if (!r.ok) throw new Error(`github get err ${r.status}`);
       const j = await r.json();
@@ -62,7 +62,10 @@ export default async (req) => {
     }
 
     async function getExisting() {
-      const r = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${GITHUB_BRANCH}/${path}`, { cache: "no-store" });
+      const r = await fetch(
+        `https://raw.githubusercontent.com/${owner}/${repo}/${GITHUB_BRANCH}/${path}`,
+        { cache: "no-store" }
+      );
       if (!r.ok) return "";
       return await r.text();
     }
@@ -78,11 +81,18 @@ export default async (req) => {
       sha: sha || undefined,
     };
 
-    const put = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`, {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, "User-Agent": "netlify-fn", "Content-Type": "application/json" },
-      body: JSON.stringify(commitBody),
-    });
+    const put = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${GITHUB_TOKEN}`,
+          "User-Agent": "netlify-fn",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(commitBody),
+      }
+    );
 
     if (!put.ok) {
       const t = await put.text();
@@ -93,9 +103,8 @@ export default async (req) => {
     }
 
     const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
-    const FROM_EMAIL = process.env.FROM_EMAIL || "djbarr1980@gmail.com";
-    const EOSR_TO = process.env.EOSR_TO || "dennis.barr@waynesanderson.com";
-    const REPLY_TO = process.env.REPLY_TO || "dennis.barr@waynesanderson.com";
+    const FROM_EMAIL = process.env.FROM_EMAIL || "no-reply@example.com";
+    const EOSR_TO = process.env.EOSR_TO || "USPMAINTENANCE@waynesanderson.com";
 
     if (SENDGRID_API_KEY) {
       const subject = `[EOSR][${priority.toUpperCase()}] ${shift} shift — ${now.toFormat("ccc LLL dd yyyy")}`;
@@ -120,10 +129,13 @@ ${entry.notes}
 <b>Affected areas:</b> ${entry.affected_areas}</p>
 <pre style="white-space:pre-wrap;font-family:inherit;border:1px solid #ddd;border-radius:6px;padding:10px;background:#f7f7f7;color:#000">${entry.notes.replace(/[<>&]/g, s => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[s]))}</pre>`;
 
+      const toList = EOSR_TO.split(",").map(e => ({ email: e.trim() })).filter(x => x.email);
+      console.log("EOSR mail FROM:", FROM_EMAIL);
+      console.log("EOSR mail TO:", toList.map(t => t.email).join(", "));
+
       const sgBody = {
-        personalizations: [{ to: EOSR_TO.split(",").map(e => ({ email: e.trim() })).filter(x => x.email) }],
+        personalizations: [{ to: toList }],
         from: { email: FROM_EMAIL },
-        reply_to: { email: REPLY_TO },
         subject,
         content: [
           { type: "text/plain", value: plain },
