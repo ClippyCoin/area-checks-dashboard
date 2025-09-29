@@ -1,13 +1,11 @@
-<style>
-  .brandBar{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:#10182b;border:1px solid #192235;border-radius:16px;padding:10px 12px;margin-bottom:12px}
-  .chicken{width:54px;height:54px}
-  .brandTxt{display:grid}
-  .brandTitle{font-weight:800;font-size:18px;letter-spacing:.2px}
-  .brandQuote{font-size:13px;color:#9aa4b2;opacity:1;transition:opacity .35s ease}
-  .countdown{margin-top:10px;display:flex;gap:10px;align-items:center;background:#0f172a;border:1px solid #192235;border-radius:12px;padding:8px 10px;width:fit-content}
-  .cdl{font-size:12px;color:#9aa4b2}
-  .cdv{font-weight:800;font-size:14px}
-  .btnWide{display:inline-flex;align-items:center;gap:8px;justify-content:center;width:100%}
-  .ico{width:18px;height:18px;vertical-align:middle}
-  button.brandBack{background:#1b2745;color:#e6f0ff;border:1px solid #263352;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
-</style>
+.brandBar{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:#10182b;border:1px solid #192235;border-radius:16px;padding:10px 12px;margin-bottom:12px}
+.chicken{width:54px;height:54px}
+.brandTxt{display:grid}
+.brandTitle{font-weight:800;font-size:18px;letter-spacing:.2px}
+.brandQuote{font-size:13px;color:#9aa4b2;opacity:1;transition:opacity .35s ease}
+.countdown{margin-top:10px;display:flex;gap:10px;align-items:center;background:#0f172a;border:1px solid #192235;border-radius:12px;padding:8px 10px;width:fit-content}
+.cdl{font-size:12px;color:#9aa4b2}
+.cdv{font-weight:800;font-size:14px}
+.btnWide{display:inline-flex;align-items:center;gap:8px;justify-content:center;width:100%}
+.ico{width:18px;height:18px;vertical-align:middle}
+button.brandBack{background:#1b2745;color:#e6f0ff;border:1px solid #263352;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
