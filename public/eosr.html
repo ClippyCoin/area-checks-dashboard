@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>End of Shift Report</title>
+  <title>End of Shift Reports</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="_brand.css">
   <style>
@@ -10,59 +10,31 @@
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
     .wrap{max-width:900px;margin:0 auto;padding:18px 20px 28px}
-    .panel{margin-top:16px;background:#0f172a;border:1px solid var(--line);border-radius:16px;padding:18px}
-    .btns{display:grid;grid-template-columns:1fr;gap:12px;margin-top:8px}
-    button{background:#1b2745;color:var(--text);border:1px solid #263352;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
-    .btnWide{display:inline-flex;align-items:center;gap:8px;justify-content:center;width:100%}
-    .ico{width:18px;height:18px;vertical-align:middle}
+    .panel{background:#0f172a;border:1px solid var(--line);border-radius:16px;padding:16px}
+    .rowBtns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    a.btn{display:inline-block;text-align:center;background:#1b2745;color:#fff;border:1px solid #263352;border-radius:12px;padding:12px;font-weight:700;text-decoration:none}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="brandBar">
-      <object type="image/svg+xml" data="_mascot.svg" class="chicken"></object>
+      <img class="chicken" alt="mechanic chicken" src="data:image/svg+xml;utf8,<?xml version='1.0'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><circle cx='64' cy='64' r='58' fill='%23121b31'/><path d='M44 86h40l4 10H40z' fill='%23f59e0b'/><circle cx='80' cy='90' r='6' fill='%232563eb'/><circle cx='52' cy='90' r='6' fill='%232563eb'/><path d='M86 70c0 10-10 18-22 18S42 80 42 70s10-18 22-18 22 8 22 18z' fill='%23eab308'/><path d='M60 44l12-10 8 10-8 4z' fill='%23ef4444'/><circle cx='82' cy='62' r='4' fill='%23000'/><circle cx='54' cy='62' r='4' fill='%23000'/><path d='M64 68l10 6-10 6-10-6z' fill='%23f97316'/></svg>">
       <div class="brandTxt">
         <div class="brandTitle">USP Poultry Maintenance</div>
-        <div class="brandQuote" id="qline"></div>
-        <div class="countdown" id="cd1">
-          <span class="cdl"></span>
-          <span class="cdv"></span>
-        </div>
-      </div>
-      <div style="justify-self:end">
-        <button class="brandBack" onclick="location.href='index.html'">
-          <svg class="ico" viewBox="0 0 24 24"><path fill="currentColor" d="M15 18l-6-6 6-6"/></svg>
-          Back to Dashboard
-        </button>
+        <div class="marqueeWrap"><div id="marquee" class="marquee"></div></div>
       </div>
     </div>
-
     <div class="panel">
-      <div class="btns">
-        <button class="btnWide" id="newBtn">
-          <svg class="ico" viewBox="0 0 24 24"><path fill="currentColor" d="M7 3h10v4H7zM5 7h14v14H5zM9 11h6v2H9zM9 15h6v2H9z"/></svg>
-          Submit New EOSR
-        </button>
-        <button class="btnWide" id="summaryBtn">
-          <svg class="ico" viewBox="0 0 24 24"><path fill="currentColor" d="M4 4h16v4H4zM4 10h16v10H4zM7 12h6v2H7zM7 16h10v2H7z"/></svg>
-          View EOSR Summary
-        </button>
+      <div class="rowBtns">
+        <a class="btn" href="https://forms.office.com/Pages/ResponsePage.aspx?id=3JG89IfD0E6e175TItrr8LO9tidJOFRAtBCVSjfTIJdUNklTSEcwUklORUMyTzFZVFBaWURQVUVIOC4u" target="_blank">Submit New EOSR</a>
+        <a class="btn" href="https://waynefarms-my.sharepoint.com/:x:/r/personal/dennis_barr_waynefarms_com/_layouts/15/Doc.aspx?sourcedoc=%7BFBE0BB11-40CA-47B7-BB41-3CB41987C502%7D&file=USP%20Maintenance%20End%20of%20Shift%20Report.xlsx" target="_blank">Previous EOSR Archive</a>
+      </div>
+      <div style="margin-top:16px">
+        <a class="btn btnWide" href="index.html">Back to Dashboard</a>
       </div>
     </div>
   </div>
-
   <script src="_brand.js"></script>
-  <script>
-    const EOSR_FORM_URL="https://forms.office.com/Pages/ResponsePage.aspx?id=3JG89IfD0E6e175TItrr8LO9tidJOFRAtBCVSjfTIJdUNklTSEcwUklORUMyTzFZVFBaWURQVUVIOC4u";
-    const EOSR_SUMMARY_URL="https://forms.office.com/pages/designpagev2.aspx?analysis=true&origin=EmailNotification&subpage=design&id=3JG89IfD0E6e175TItrr8LO9tidJOFRAtBCVSjfTIJdUNklTSEcwUklORUMyTzFZVFBaWURQVUVIOC4u";
-    startQuoteRotation('qline',5000);
-    renderCountdown("cd1","Contest ends in","2025-10-31T23:59:59-05:00");
-    document.getElementById('newBtn').addEventListener('click',function(){
-      window.open(EOSR_FORM_URL,"_blank","noopener,noreferrer");
-    });
-    document.getElementById('summaryBtn').addEventListener('click',function(){
-      window.open(EOSR_SUMMARY_URL,"_blank","noopener,noreferrer");
-    });
-  </script>
+  <script>buildMarquee('marquee');</script>
 </body>
 </html>
