@@ -233,15 +233,14 @@
     function openExcel(area){const url=areaExcelLink[String(area||"").toUpperCase()];if(!url){alert("No Excel link for "+area);return}window.open(url,"_blank","noopener,noreferrer")}
     function openSummary(area){const url=areaSummaryLink[String(area||"").toUpperCase()];if(!url){alert("No Summary link for "+area);return}window.open(url,"_blank","noopener,noreferrer")}
 
-    document.getElementById("autoBtn").addEventListener("click",()=>render());
-    document.getElementById("addBtn").addEventListener("click",addArea);
-    document.getElementById("addArea").addEventListener("keydown",e=>{if(e.key==="Enter")addArea()});
-    document.getElementById("refreshBtn").addEventListener("click",()=>render());
-    document.getElementById("clearBtn").addEventListener("click",()=>{saveAreas(["KILL"]);render()});
-    document.getElementById("eosrBtn").addEventListener("click",()=>{window.open('eosr.html','_blank','noopener,noreferrer')});
+    <script>
+  document.getElementById("autoBtn").addEventListener("click", ()=>autoDiscover());
+  document.getElementById("addBtn").addEventListener("click", addArea);
+  document.getElementById("addArea").addEventListener("keydown", e => { if (e.key === "Enter") addArea(); });
+  document.getElementById("refreshBtn").addEventListener("click", ()=>render());
+  document.getElementById("clearBtn").addEventListener("click", ()=>{ saveAreas(["KILL"]); render(); });
+  autoDiscover().then(render);
+</script>
 
-    render();
-    setInterval(render,30000);
-  </script>
 </body>
 </html>
