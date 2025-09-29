@@ -4,77 +4,65 @@
   <meta charset="utf-8">
   <title>End of Shift Report</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="_brand.css">
   <style>
-    body{background:#0b0f1a;color:#e6f0ff;font-family:Inter,system-ui,sans-serif;margin:0;padding:20px}
-    h1{margin:0 0 20px}
-    form{display:grid;gap:12px;max-width:640px}
-    input,select,textarea,button{padding:10px;border-radius:8px;border:1px solid #263352;background:#111c34;color:#fff}
-    textarea{min-height:150px}
-    button{cursor:pointer;font-weight:600;background:#1b2745}
-    .entry{border:1px solid #263352;border-radius:12px;padding:12px;margin:12px 0;background:#0f172a}
-    .chip{display:inline-block;padding:2px 8px;border-radius:8px;font-size:12px;font-weight:700}
-    .chip.normal{background:#1b2745}
-    .chip.attention{background:#facc15;color:#000}
-    .chip.critical{background:#ef4444}
-    .chip.USDA{background:#16a34a}
+    :root{--bg:#0b0f1a;--panel:#0f172a;--muted:#9aa4b2;--text:#e6f0ff;--line:#192235}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+    .wrap{max-width:900px;margin:0 auto;padding:18px 20px 28px}
+    .panel{margin-top:16px;background:#0f172a;border:1px solid var(--line);border-radius:16px;padding:18px}
+    .btns{display:grid;grid-template-columns:1fr;gap:12px;margin-top:8px}
+    button{background:#1b2745;color:var(--text);border:1px solid #263352;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
+    .btnWide{display:inline-flex;align-items:center;gap:8px;justify-content:center;width:100%}
+    .ico{width:18px;height:18px;vertical-align:middle}
   </style>
 </head>
 <body>
-  <h1>End of Shift Report</h1>
-  <form id="eosrForm">
-    <label>Shift
-      <select name="shift" required>
-        <option value="first">First</option>
-        <option value="second">Second</option>
-        <option value="third">Third</option>
-      </select>
-    </label>
-    <label>Submitted by
-      <input type="text" name="submitted_by">
-    </label>
-    <label>Priority
-      <select name="priority">
-        <option value="normal">Normal</option>
-        <option value="attention">Attention</option>
-        <option value="critical">Critical</option>
-        <option value="USDA">USDA</option>
-      </select>
-    </label>
-    <label>Affected areas
-      <input type="text" value="USP Complex" readonly>
-    </label>
-    <label>Report
-      <textarea name="notes" required></textarea>
-    </label>
-    <button type="submit">Submit</button>
-  </form>
+  <div class="wrap">
+    <div class="brandBar">
+      <object type="image/svg+xml" data="_mascot.svg" class="chicken"></object>
+      <div class="brandTxt">
+        <div class="brandTitle">USP Poultry Maintenance</div>
+        <div class="brandQuote" id="qline"></div>
+        <div class="countdown" id="cd1">
+          <span class="cdl"></span>
+          <span class="cdv"></span>
+        </div>
+      </div>
+      <div style="justify-self:end">
+        <button class="brandBack" onclick="location.href='index.html'">
+          <svg class="ico" viewBox="0 0 24 24"><path fill="currentColor" d="M15 18l-6-6 6-6"/></svg>
+          Back to Dashboard
+        </button>
+      </div>
+    </div>
 
-  <h2 style="margin-top:24px">This Week’s Reports</h2>
-  <div id="entries">Loading…</div>
+    <div class="panel">
+      <div class="btns">
+        <button class="btnWide" id="newBtn">
+          <svg class="ico" viewBox="0 0 24 24"><path fill="currentColor" d="M7 3h10v4H7zM5 7h14v14H5zM9 11h6v2H9zM9 15h6v2H9z"/></svg>
+          Submit New EOSR
+        </button>
+        <button class="btnWide" id="summaryBtn">
+          <svg class="ico" viewBox="0 0 24 24"><path fill="currentColor" d="M4 4h16v4H4zM4 10h16v10H4zM7 12h6v2H7zM7 16h10v2H7z"/></svg>
+          View EOSR Summary
+        </button>
+      </div>
+    </div>
+  </div>
 
-<script>
-async function loadThisWeek(){
-  const r=await fetch("/.netlify/functions/eosr_list?week=current",{cache:"no-store"});
-  const j=await r.json();
-  const c=document.getElementById("entries");
-  c.innerHTML=(j.items||[]).map(e=>{
-    return `<div class="entry">
-      <div><b>${e.local_day}</b> – ${e.shift} shift – <span class="chip ${e.priority}">${e.priority}</span></div>
-      <div><i>${e.submitted_by||""}</i></div>
-      <div>${String(e.notes||"").replace(/\n/g,"<br>")}</div>
-    </div>`;
-  }).join("") || "No reports yet.";
-}
-
-document.getElementById("eosrForm").addEventListener("submit",async ev=>{
-  ev.preventDefault();
-  const fd=new FormData(ev.target);
-  const data=Object.fromEntries(fd.entries());
-  const r=await fetch("/.netlify/functions/eosr_submit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});
-  if(r.ok){ev.target.reset();loadThisWeek();}else{alert("Error submitting EOSR");}
-});
-
-loadThisWeek();
-</script>
+  <script src="_brand.js"></script>
+  <script>
+    const EOSR_FORM_URL="https://forms.office.com/Pages/ResponsePage.aspx?id=3JG89IfD0E6e175TItrr8LO9tidJOFRAtBCVSjfTIJdUNklTSEcwUklORUMyTzFZVFBaWURQVUVIOC4u";
+    const EOSR_SUMMARY_URL="https://forms.office.com/pages/designpagev2.aspx?analysis=true&origin=EmailNotification&subpage=design&id=3JG89IfD0E6e175TItrr8LO9tidJOFRAtBCVSjfTIJdUNklTSEcwUklORUMyTzFZVFBaWURQVUVIOC4u";
+    startQuoteRotation('qline',5000);
+    renderCountdown("cd1","Contest ends in","2025-10-31T23:59:59-05:00");
+    document.getElementById('newBtn').addEventListener('click',function(){
+      window.open(EOSR_FORM_URL,"_blank","noopener,noreferrer");
+    });
+    document.getElementById('summaryBtn').addEventListener('click',function(){
+      window.open(EOSR_SUMMARY_URL,"_blank","noopener,noreferrer");
+    });
+  </script>
 </body>
 </html>
