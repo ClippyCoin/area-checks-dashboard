@@ -86,6 +86,7 @@
     const API_AREAS="/.netlify/functions/areas";
     const STORE="plantops-areas";
     const DEFAULTS=["KILL"];
+    const REQUIRED_PER_SHIFT=7;
 
     const areaExcelLink={
       "PICKING":"https://waynefarms-my.sharepoint.com/:x:/p/dennis_barr/ETedCnjkWNlNneqVATRRlFcB8OMrM2I51p6Gt-r7ZkCowQ?email=Mickey.Cox%40WayneSanderson.com&e=4b43pU",
@@ -104,12 +105,17 @@
     function loadAreas(){try{const s=localStorage.getItem(STORE);const arr=s?JSON.parse(s):DEFAULTS;return uniq(arr.map(v=>String(v||"").trim().toUpperCase()).filter(Boolean))}catch{return[...DEFAULTS]}}
     function saveAreas(a){localStorage.setItem(STORE,JSON.stringify(uniq(a)))}
 
-    function fmt(iso){if(!iso)return"n/a";const d=new Date(iso);const p=n=>String(n).padStart(2,"0");return d.getUTCFullYear()+"-"+p(d.getUTCMonth()+1)+"-"+p(d.getUTCDate())+" "+p(d.getUTCHours())+":"+p(d.getUTCMinutes())+":"+p(d.getUTCSeconds())+" UTC"}
-
     function formatNowChicago(){
       const f=new Intl.DateTimeFormat("en-US",{timeZone:"America/Chicago",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false,timeZoneName:"short"});
       const parts=Object.fromEntries(f.formatToParts(new Date()).map(p=>[p.type,p.value]));
       return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second} ${parts.timeZoneName}`;
+    }
+
+    function fmt(iso){
+      if(!iso)return"n/a";
+      const d=new Date(iso);
+      const p=n=>String(n).padStart(2,"0");
+      return d.getUTCFullYear()+"-"+p(d.getUTCMonth()+1)+"-"+p(d.getUTCDate())+" "+p(d.getUTCHours())+":"+p(d.getUTCMinutes())+":"+p(d.getUTCSeconds())+" UTC";
     }
 
     function statusPill(s){const v=String(s||"").toUpperCase();if(v==="OK")return'<span class="pill ok">OK</span>';if(v==="ATTENTION")return'<span class="pill attn">Attention</span>';if(v==="ALERT")return'<span class="pill alert">Alert</span>';return'<span class="pill crit">Critical</span>'}
@@ -117,12 +123,22 @@
     function issuesTextColor(i){const n=Math.max(0,Number(i)||0);if(n===0)return"var(--ok)";if(n<=2)return"var(--y)";if(n<=4)return"var(--o)";return"var(--r)"}
     function ringGradientIssues(i){const n=Math.max(0,Number(i)||0);if(n===0)return"conic-gradient(var(--ok) 360deg, transparent 0)";const cap=Math.min(n,15);const deg=v=>Math.round((v/15)*360);const yEnd=deg(Math.min(cap,6));const oEnd=deg(Math.min(cap,10));const rEnd=deg(cap);const parts=[];if(yEnd>0)parts.push(`var(--y) ${yEnd}deg`);if(oEnd>yEnd)parts.push(`var(--o) ${oEnd}deg`);if(rEnd>oEnd)parts.push(`var(--r) ${rEnd}deg`);parts.push("rgba(255,255,255,0.06) 0");return`conic-gradient(${parts.join(",")})`}
     function issuesRing(i){const gradient=ringGradientIssues(i);const color=issuesTextColor(i);return `<div class="ringWrap"><div class="ring" style="--gradient:${gradient}"><div class="ringVal" style="color:${color}">${Math.max(0,Number(i)||0)}</div></div><div class="ringLabel">ISSUES</div></div>`}
-    function riskColor(i){if(i>=5)return"var(--r)";if(i>=3)return"var(--o)";if(i>=1)return"var(--y)";return"var(--ok)"} 
+    function riskColor(i){if(i>=5)return"var(--r)";if(i>=3)return"var(--o)";if(i>=1)return"var(--y)";return"var(--ok)"}
     function riskLabel(i){if(i>=5)return"Critical";if(i>=3)return"Alert";if(i>=1)return"Attention";return"Good"}
     function riskFillTier(i){if(i>=5)return 100; if(i>=3)return 75; if(i>=1)return 50; return 25}
     function shiftColor(n){if(n>=9)return"var(--w)";if(n>=7)return"var(--ok)";if(n>=5)return"var(--o)";if(n>=3)return"var(--o)";return"var(--r)"}
     function subsStack(f,s,t){return `<ul class="subsV"><li><span>1st</span><span style="color:${shiftColor(f)}">${f}</span></li><li><span>2nd</span><span style="color:${shiftColor(s)}">${s}</span></li><li><span>3rd</span><span style="color:${shiftColor(t)}">${t}</span></li></ul>`}
     function resolveAreaKey(area){const a=String(area||"").toUpperCase();if(a.startsWith("PICK"))return"PICKING";return a;}
+
+    function currentShiftChicago(){
+      const z="America/Chicago";
+      const d=new Date();
+      const fmt=new Intl.DateTimeFormat("en-US",{timeZone:z,hour:"2-digit",hour12:false});
+      const hour=parseInt(fmt.format(d),10);
+      if(hour>=5 && hour<13) return "first";
+      if(hour>=13 && hour<21) return "second";
+      return "third";
+    }
 
     function card(area,d){
       const minutes=Math.max(0,Number(d.minutesSince)||0);
@@ -130,7 +146,9 @@
       const s=Number(d.shiftCountsToday?.second||0);
       const t=Number(d.shiftCountsToday?.third||0);
       const submissions=(Number(d.submissionsToday??0))||(f+s+t);
-      const compLocal=(f+s+t)>0?Math.round((submissions/Math.max(1,(f+s+t)))*100):Number(d.completionPct||0);
+      const active=currentShiftChicago();
+      const counts={first:f,second:s,third:t};
+      const compLocal=Math.round(Math.min(100,Math.max(0,(counts[active]/Math.max(1,REQUIRED_PER_SHIFT))*100)));
       const rColor=riskColor(d.issuesToday);
       const rPct=riskFillTier(d.issuesToday);
       const chips=[pctPill("On time",d.onTimePct),pctPill("Completions",compLocal),statusPill(d.status)].join("");
