@@ -1,0 +1,16 @@
+<svg class="chicken" viewBox="0 0 128 128" aria-hidden="true">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f3f4f6"/><stop offset="1" stop-color="#cbd5e1"/>
+    </linearGradient>
+  </defs>
+  <circle cx="64" cy="64" r="62" fill="#0b1324" stroke="#263352" stroke-width="4"/>
+  <path d="M88 68c0 17-12 28-24 28S44 85 44 68s9-30 20-30 24 13 24 30z" fill="url(#g1)" stroke="#475569" stroke-width="2"/>
+  <circle cx="70" cy="60" r="5" fill="#0b0f1a"/><circle cx="70" cy="60" r="1.5" fill="#e6f0ff"/>
+  <path d="M56 54c-4-6-2-13 4-16 2 5-1 9-4 16z" fill="#ef4444"/>
+  <path d="M83 82l16-16 7 7-16 16-9 2 2-9z" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+  <circle cx="102" cy="66" r="3.2" fill="#d1d5db"/><circle cx="97" cy="71" r="3.2" fill="#d1d5db"/>
+  <path d="M58 76c6 3 12 3 18 0" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+  <path d="M64 48c6 0 10 2 12 5" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+  <path d="M77 67c-3 2-7 3-13 3-7 0-12-2-15-5" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+</svg>
