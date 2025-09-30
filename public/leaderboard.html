@@ -25,7 +25,7 @@
 <body>
   <div class="wrap">
     <header>
-      <div>Leaderboard, this work week Mon to Fri</div>
+      <div>Leaderboard, running work week</div>
       <div><a class="btn" href="/">Back</a></div>
     </header>
 
@@ -54,17 +54,15 @@
     fetch(API, { cache: "no-store" })
       .then(r => r.json())
       .then(j => {
-        const goalPerDay = 7;
-        const days = 5;
-        const denom = goalPerDay * days;
+        const denom = j.denom && j.denom.perShift ? j.denom.perShift : 0;
         document.getElementById("meta").textContent = `Period ${j.period.start} to ${j.period.end} (${j.period.tz})`;
         const tb = document.querySelector("#tbl tbody");
         tb.innerHTML = [
-          row("1st shift", j.counted.first, j.percent.first, denom),
+          row("1st shift", j.counted.first,  j.percent.first,  denom),
           row("2nd shift", j.counted.second, j.percent.second, denom),
-          row("3rd shift", j.counted.third, j.percent.third, denom)
+          row("3rd shift", j.counted.third,  j.percent.third,  denom)
         ].join("");
-        document.getElementById("note").textContent = "Counts above 8 do not increase percent, goal is 7 per shift per plant day, period is Monday to Friday.";
+        document.getElementById("note").textContent = j.notes ? j.notes : "Cap is 8 per code per day, percent uses a goal of 7 per code per day, denominator comes from the API.";
       })
       .catch(() => { document.getElementById("meta").textContent = "Error loading leaderboard"; });
   </script>
