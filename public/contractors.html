@@ -5,47 +5,193 @@
   <title>Contractor Work Notice</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    :root { --bg:#0b0f1a; --panel:#0f172a; --line:#192235; --text:#e6f0ff; --muted:#9aa4b2; --info:#60a5fa; }
-    * { box-sizing:border-box; }
-    html,body { height:100%; margin:0; background:var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-    .wrap { max-width:900px; margin:0 auto; padding:20px; }
-    header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:6px 0 16px; }
-    h1 { font-size:1.35rem; margin:0; }
-    .card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:18px; }
-    .row { display:flex; gap:12px; flex-wrap:wrap; }
-    .btn { display:inline-block; padding:12px 16px; border-radius:12px; border:1px solid var(--line); background:#10182b; color:var(--text); text-decoration:none; font-weight:600; }
-    .btn.primary { background:var(--info); color:#071018; border-color:transparent; }
-    .sub { color:var(--muted); font-size:.95rem; line-height:1.45; }
-    .pill { display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid var(--line); color:var(--muted); font-size:.85rem; }
-    .topnav { margin-bottom:14px; }
-    .topnav a { color:var(--muted); text-decoration:none; font-size:.95rem; }
+    :root { --bg:#0b0f1a; --panel:#0f172a; --line:#192235; --text:#e6f0ff; --muted:#9aa4b2; --info:#60a5fa; --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444; }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:900px;margin:0 auto;padding:20px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 16px}
+    h1{font-size:1.35rem;margin:0}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:.85rem}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .btn{display:inline-block;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:#0e1628;color:var(--text);text-decoration:none;font-weight:700}
+    .btn.primary{background:var(--info);color:#071018;border-color:transparent}
+    .toggle{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
+    .tbtn{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#0e1628;color:var(--muted);cursor:pointer}
+    .tbtn.active{background:var(--info);color:#071018;border-color:transparent}
+    .list{display:grid;gap:10px;margin-top:8px}
+    .job{border:1px solid var(--line);border-radius:14px;padding:14px;background:#0e1628}
+    .top{display:flex;justify-content:space-between;gap:10px}
+    .company{font-weight:700}
+    .status{font-size:.8rem;padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
+    .s-planned{background:#2a2435}
+    .s-progress{background:#1f3529;border-color:#1f3529}
+    .s-complete{background:#222a33}
+    .meta{color:var(--muted);font-size:.92rem;margin-top:4px}
+    .permits{font-size:.82rem;margin-top:4px;color:var(--muted)}
+    .summary{margin-top:6px}
+    .empty{color:var(--muted);font-size:.95rem}
+    .error{background:#3a1212;border:1px solid #5e1c1c;color:#ffd3d3;padding:10px;border-radius:10px;margin:10px 0}
+    .topnav{margin-bottom:14px}
+    .topnav a{color:var(--muted);text-decoration:none;font-size:.95rem}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <h1>Contractor Work Notice</h1>
-      <span class="pill" id="today">Today: </span>
+      <span class="pill" id="today">Today:</span>
     </header>
 
-    <div class="topnav"><a href="index.html">← Back to Dashboard</a></div>
+    <div class="topnav"><a href="/">← Back to Dashboard</a></div>
 
     <div class="card" style="margin-bottom:14px;">
-      <p class="sub">Log who is onsite, where they will work, when they will be here, and what they will do, so the duty supervisor has clear daily visibility.</p>
+      <p class="meta">Log who is onsite, where, when, and what they will do, so the duty supervisor has clear daily visibility.</p>
       <div class="row" style="margin-top:8px;">
         <a class="btn primary" href="https://forms.office.com/Pages/ResponsePage.aspx?id=3JG89IfD0E6e175TItrr8LO9tidJOFRAtBCVSjfTIJdUME5TSUVYUU8xVVBXU0xEMFhaU01TNjVYNC4u" target="_blank" rel="noopener">Submit New Contractor Record</a>
         <a class="btn" href="https://waynefarms-my.sharepoint.com/:x:/r/personal/dennis_barr_waynefarms_com/_layouts/15/Doc.aspx?sourcedoc=%7B78B63BA0-74B3-4BC1-B346-2EED2B017A13%7D&file=Contractor%20Work%20Notice.xlsx&action=edit&mobileredirect=true" target="_blank" rel="noopener">View Excel File</a>
       </div>
+      <div id="err" class="error" style="display:none;"></div>
     </div>
 
     <div class="card">
-      <strong>Tip:</strong> use a one sentence work summary and an exact location, for example, Picking Room, north wall pumps.
+      <div class="toggle" id="rangeToggle">
+        <button class="tbtn active" data-days="7">7 days</button>
+        <button class="tbtn" data-days="14">2 weeks</button>
+        <button class="tbtn" data-days="21">3 weeks</button>
+        <button class="tbtn" data-days="28">4 weeks</button>
+        <button class="tbtn" data-days="all">All upcoming</button>
+      </div>
+      <div id="list" class="list"></div>
+      <div id="empty" class="empty" style="display:none;">No upcoming contractor work in this window.</div>
     </div>
   </div>
 
   <script>
-    const fmt = new Intl.DateTimeFormat(undefined,{weekday:"short", month:"short", day:"2-digit", year:"numeric"});
-    document.getElementById("today").textContent = "Today: " + fmt.format(new Date());
+    // Today pill
+    const fmtToday = new Intl.DateTimeFormat(undefined,{weekday:"short", month:"short", day:"2-digit", year:"numeric"});
+    document.getElementById("today").textContent = "Today: " + fmtToday.format(new Date());
+
+    // CSV locations to try
+    const CSV_PATHS = ["contractors/upcoming.csv","./contractors/upcoming.csv"];
+
+    function parseCSV(text){
+      const lines = text.trim().split(/\r?\n/);
+      const heads = lines.shift().split(",").map(h=>h.trim());
+      return lines.filter(x=>x.trim().length>0).map(line=>{
+        const parts = line.split(",").map(s=>s.trim());
+        const row = {}; heads.forEach((h,i)=>row[h]=parts[i]||"");
+        return row;
+      });
+    }
+
+    let rows = [];
+    let currentWindow = "7";
+
+    function loadCSV(paths){
+      if(paths.length === 0){
+        showError("CSV not found at contractors/upcoming.csv. Add the file and redeploy.");
+        rows = parseCSV(`work_date,company,foreman,phone,area,summary,permits,status
+2025-10-11,MecTech,Jason King,(334)-759-9800,Pick and Kill,Feather auger hanger bracket mod,Hot Work; Lift,Planned
+2025-10-14,H&G Electric,Chris Dixon,(706)-566-2068,Evis,Panel PR-3 breaker replacement,Live Electrical,Planned`);
+        render(); return;
+      }
+      const url = paths[0];
+      fetch(url, {cache:"no-store"}).then(r=>{
+        if(!r.ok) throw new Error(String(r.status));
+        return r.text();
+      }).then(text=>{
+        rows = parseCSV(text);
+        render();
+      }).catch(()=>loadCSV(paths.slice(1)));
+    }
+
+    function showError(msg){
+      const el = document.getElementById("err");
+      el.textContent = msg;
+      el.style.display = "block";
+    }
+
+    document.getElementById("rangeToggle").addEventListener("click", e=>{
+      const btn = e.target.closest("button[data-days]");
+      if(!btn) return;
+      document.querySelectorAll(".tbtn").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      currentWindow = btn.dataset.days;
+      render();
+    });
+
+    function toISO(dstr){
+      if(!dstr) return null;
+      let s = dstr.trim();
+      if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s+"T00:00:00");
+      const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if(m){ return new Date(`${m[3]}-${m[1].padStart(2,"0")}-${m[2].padStart(2,"0")}T00:00:00`); }
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function statusClass(s){
+      if(!s) return "s-planned status";
+      const t = s.toLowerCase();
+      if(t.includes("progress")) return "s-progress status";
+      if(t.includes("complete")) return "s-complete status";
+      return "s-planned status";
+    }
+
+    function render(){
+      const list = document.getElementById("list");
+      const empty = document.getElementById("empty");
+      list.innerHTML = "";
+      const today = new Date(); today.setHours(0,0,0,0);
+
+      let filtered = rows
+        .map(r => ({...r, d: toISO(r.work_date)}))
+        .filter(r => r.d && r.d >= today);
+
+      if(currentWindow !== "all"){
+        const days = parseInt(currentWindow,10);
+        const end = new Date(today); end.setDate(end.getDate()+days);
+        filtered = filtered.filter(r => r.d <= end);
+      }
+
+      const rank = s => s && s.toLowerCase().includes("progress") ? 0 : s && s.toLowerCase().includes("planned") ? 1 : 2;
+      filtered.sort((a,b)=> rank(a.status)-rank(b.status) || a.d-b.d || String(a.company).localeCompare(String(b.company)));
+
+      if(filtered.length === 0){
+        empty.style.display = "block";
+        return;
+      }
+      empty.style.display = "none";
+
+      const dfDate = new Intl.DateTimeFormat(undefined,{month:"short", day:"2-digit", year:"numeric"});
+
+      for(const r of filtered){
+        const permits = String(r.permits||"").trim();
+        const picons = [
+          permits.toLowerCase().includes("hot work") ? "H" : "",
+          permits.toLowerCase().includes("live electrical") ? "E" : "",
+          permits.toLowerCase().includes("confined space") ? "C" : "",
+          permits && !/hot work|live electrical|confined space/i.test(permits) ? "O" : ""
+        ].filter(Boolean).join(" ");
+
+        const div = document.createElement("div");
+        div.className = "job";
+        div.innerHTML = `
+          <div class="top">
+            <div class="company">${r.company||""}</div>
+            <div class="${statusClass(r.status)}">${r.status||""}</div>
+          </div>
+          <div class="meta">${r.d ? dfDate.format(r.d) : ""} • ${r.area||""}</div>
+          <div class="summary">${r.summary||""}</div>
+          <div class="permits">${picons ? "Permits: " + picons : ""}</div>
+          <div class="meta">Foreman: ${r.foreman||""}${r.phone ? " • " + r.phone : ""}</div>
+        `;
+        list.appendChild(div);
+      }
+    }
+
+    loadCSV(CSV_PATHS);
   </script>
 </body>
 </html>
