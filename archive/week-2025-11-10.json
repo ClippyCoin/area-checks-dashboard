@@ -1,0 +1,24 @@
+{
+  "period": {
+    "start": "2025-11-10",
+    "end": "2025-11-14",
+    "tz": "America/Chicago"
+  },
+  "totals": {
+    "first": 52,
+    "second": 46,
+    "third": 21
+  },
+  "counted": {
+    "first": 16,
+    "second": 16,
+    "third": 8
+  },
+  "percent": {
+    "first": 46,
+    "second": 46,
+    "third": 23
+  },
+  "winner": "1st, 2nd",
+  "savedAt": "2025-11-11T21:41:29.525Z"
+}
